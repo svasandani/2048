@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <meta name="theme-color" content="#F2A5FF" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700;900&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <title>Play 2048</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        font-family: "Be Vietnam Pro", sans-serif;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      :root {
+        --black: #000000;
+        --black-on-theme: #000000;
+        --white: #ffffff;
+        --light-gray: #e5e5e5;
+        --lightest-gray: #f1f1f1;
+        --gray: #a3a3a3;
+        --green: #3eb23e;
+        --light-green: #a3fab3;
+        --yellow: #d3b342;
+        --theme: #f2a5ff;
+        --theme-accent: #bb76c6;
+
+        --columnsize: 4;
+        --rowsize: 4;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --black: #e2e2e2;
+          --white: #1c1c1c;
+          --light-gray: #4c4c4c;
+          --lightest-gray: #2f2f2f;
+          --light-green: #3e5c3f;
+        }
+      }
+
+      body {
+        touch-action: none;
+
+        display: grid;
+        place-content: center;
+
+        margin: 0;
+        padding: 0;
+
+        font-size: 1rem;
+
+        background-color: var(--white);
+        color: var(--black);
+        stroke: var(--black);
+      }
+
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        margin: 0;
+      }
+      h1 {
+        font-size: 1.375rem;
+        font-weight: 900;
+        line-height: 2rem;
+      }
+      nav h1 {
+        color: var(--black-on-theme);
+      }
+
+      .dialog {
+        appearance: none;
+        border: none;
+        outline: none;
+
+        margin: 0;
+        padding: 0;
+
+        width: 100vw;
+        height: 100vh;
+        max-width: 100vw;
+        max-height: 100vh;
+
+        font-size: 0.75rem;
+
+        background-color: var(--white);
+        color: var(--black);
+        stroke: var(--black);
+      }
+      .dialog[open] {
+        display: flex;
+        flex-flow: column nowrap;
+      }
+
+      .one-pane {
+        height: 100%;
+        overflow-y: auto;
+
+        display: grid;
+        grid-template-columns: 1fr;
+        justify-content: flex-start;
+        gap: 1rem;
+        padding: 1rem;
+      }
+      .one-pane-two-pane {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+      }
+      .one-pane-two-pane.centered {
+        align-items: center;
+      }
+
+      .two-pane {
+        height: 100%;
+        overflow-y: auto;
+
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        padding: 1rem;
+      }
+
+      .pane {
+        display: flex;
+        flex-flow: column nowrap;
+        gap: 1rem;
+      }
+      .pane .card {
+        border-radius: 0.5rem;
+        padding: 0.5rem;
+        white-space: nowrap;
+      }
+      .pane .button {
+        width: 100%;
+      }
+
+      .button {
+        appearance: none;
+        border: none;
+        outline: none;
+
+        border-radius: 0.5rem;
+        color: var(--black);
+        cursor: pointer;
+        font-size: 1rem;
+        padding: 0.375rem 0.5rem;
+
+        display: flex;
+        flex-flow: row nowrap;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .button:disabled {
+        cursor: not-allowed;
+        opacity: 0.4;
+      }
+      .button.small {
+        font-size: 0.75rem;
+      }
+      .button svg {
+        display: block;
+      }
+      .button span {
+        padding: 0;
+      }
+
+      .checkbox {
+        display: flex;
+        flex-flow: row nowrap;
+        align-items: center;
+        gap: 0.25rem;
+      }
+
+      .strong {
+        font-weight: bold;
+      }
+      .light-gray {
+        background-color: var(--light-gray);
+      }
+      .lightest-gray {
+        background-color: var(--lightest-gray);
+      }
+      .gray {
+        background-color: var(--gray);
+        color: var(--black-on-theme);
+        stroke: var(--black-on-theme);
+      }
+      .white {
+        background-color: var(--white);
+      }
+      .green {
+        background-color: var(--green);
+        color: var(--black-on-theme);
+        stroke: var(--black-on-theme);
+      }
+      .light-green {
+        background-color: var(--light-green);
+      }
+      .theme {
+        background-color: var(--theme);
+        color: var(--black-on-theme);
+        stroke: var(--black-on-theme);
+      }
+      .accent {
+        background-color: var(--theme-accent);
+        color: var(--black-on-theme);
+        stroke: var(--black-on-theme);
+      }
+      .yellow {
+        background-color: var(--yellow);
+        color: var(--black-on-theme);
+        stroke: var(--black-on-theme);
+      }
+      .yellow-color {
+        color: var(--yellow);
+      }
+
+      .sticky {
+        position: sticky;
+        top: 0;
+      }
+      .hidden {
+        display: none;
+      }
+
+      .nav {
+        width: 100%;
+        padding: 1rem;
+
+        display: flex;
+        flex-flow: row nowrap;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .nav-buttons {
+        display: flex;
+        flex-flow: row nowrap;
+        align-items: center;
+        gap: 0.5rem;
+
+        flex: 1 1 0;
+      }
+      .nav-buttons.left {
+        justify-content: start;
+      }
+      .nav-buttons.right {
+        justify-content: end;
+      }
+
+      .icon-group {
+        display: flex;
+        flex-flow: row nowrap;
+        align-items: center;
+        gap: 0.375rem;
+      }
+
+      main#container {
+        width: 100vw;
+        height: 100vh;
+
+        display: flex;
+        flex-flow: column nowrap;
+      }
+
+      nav.nav {
+        background-color: var(--theme);
+      }
+
+      section#game {
+        width: 100%;
+        height: 100%;
+        flex-grow: 1;
+
+        display: grid;
+        grid-template-rows: 1fr;
+        place-content: center;
+      }
+
+      #board-container {
+        position: relative;
+        margin: 2rem;
+      }
+      .board {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+
+        display: grid;
+        grid-template-columns: repeat(var(--rowsize, 4), 1fr);
+        grid-template-rows: repeat(var(--columnsize, 4), 1fr);
+        gap: 0.25rem;
+
+        padding: 1rem;
+      }
+      #board {
+        background-color: var(--lightest-gray);
+        border-radius: 0.5rem;
+      }
+      .board-square {
+        width: 4rem;
+        height: 4rem;
+        border: 1px solid var(--light-gray);
+        border-radius: 0.25rem;
+      }
+
+      #overview-daily-games,
+      #overview-random-games-container,
+      #overview-random-games {
+        display: flex;
+        flex-flow: column nowrap;
+        gap: 0.5rem;
+      }
+
+      @keyframes fade-in {
+        from {
+          opacity: 0;
+          transform: translateX(-50%) translateY(-1rem);
+        }
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+        }
+
+        50% {
+          transform: scale(1.2);
+        }
+
+        100% {
+          transform: scale(1);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main id="container">
+      <nav class="nav">
+        <div class="nav-buttons left">
+          <button id="overview-button" class="accent button">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M1.875 10L9.33667 2.5375C9.70333 2.17166 10.2967 2.17166 10.6625 2.5375L18.125 10M3.75 8.125V16.5625C3.75 17.08 4.17 17.5 4.6875 17.5H8.125V13.4375C8.125 12.92 8.545 12.5 9.0625 12.5H10.9375C11.455 12.5 11.875 12.92 11.875 13.4375V17.5H15.3125C15.83 17.5 16.25 17.08 16.25 16.5625V8.125M6.875 17.5H13.75"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+        </div>
+        <h1>2048</h1>
+        <div class="nav-buttons right">
+          <button id="more-button" class="accent button">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 15 15"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M2.34375 1.875V8.90625C2.34375 9.27921 2.49191 9.6369 2.75563 9.90062C3.01935 10.1643 3.37704 10.3125 3.75 10.3125H5.15625M2.34375 1.875H1.40625M2.34375 1.875H12.6562M5.15625 10.3125H9.84375M5.15625 10.3125L4.53125 12.1875M12.6562 1.875H13.5938M12.6562 1.875V8.90625C12.6562 9.27921 12.5081 9.6369 12.2444 9.90062C11.9806 10.1643 11.623 10.3125 11.25 10.3125H9.84375M9.84375 10.3125L10.4688 12.1875M4.53125 12.1875H10.4688M4.53125 12.1875L4.21875 13.125M10.4688 12.1875L10.7812 13.125M4.6875 7.5L6.5625 5.625L7.905 6.9675C8.53575 6.06206 9.3576 5.30614 10.3125 4.75313"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+        </div>
+      </nav>
+      <section id="game">
+        <div id="board-container">
+          <div id="board" class="board">
+            <div class="board-square"></div>
+            <div class="board-square"></div>
+            <div class="board-square"></div>
+            <div class="board-square"></div>
+            <div class="board-square"></div>
+            <div class="board-square"></div>
+            <div class="board-square"></div>
+            <div class="board-square"></div>
+            <div class="board-square"></div>
+            <div class="board-square"></div>
+            <div class="board-square"></div>
+            <div class="board-square"></div>
+            <div class="board-square"></div>
+            <div class="board-square"></div>
+            <div class="board-square"></div>
+            <div class="board-square"></div>
+          </div>
+          <div id="state" class="board"></div>
+          <div id="anim" class="board"></div>
+        </div>
+      </section>
+    </main>
+
+    <dialog id="overview-dialog" class="dialog">
+      <div class="nav">
+        <h1>Overview</h1>
+        <button id="overview-close-button" class="light-gray button">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 20 20"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M5 15L15 5M5 5L15 15"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </button>
+      </div>
+      <div class="two-pane">
+        <div class="pane">
+          <div class="icon-group">
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 22 22"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M6.1875 2.75V4.8125M15.8125 2.75V4.8125M2.75 17.1875V6.875C2.75 6.32799 2.9673 5.80339 3.35409 5.41659C3.74089 5.0298 4.26549 4.8125 4.8125 4.8125H17.1875C17.7345 4.8125 18.2591 5.0298 18.6459 5.41659C19.0327 5.80339 19.25 6.32799 19.25 6.875V17.1875M2.75 17.1875C2.75 17.7345 2.9673 18.2591 3.35409 18.6459C3.74089 19.0327 4.26549 19.25 4.8125 19.25H17.1875C17.7345 19.25 18.2591 19.0327 18.6459 18.6459C19.0327 18.2591 19.25 17.7345 19.25 17.1875M2.75 17.1875V10.3125C2.75 9.76549 2.9673 9.24089 3.35409 8.85409C3.74089 8.4673 4.26549 8.25 4.8125 8.25H17.1875C17.7345 8.25 18.2591 8.4673 18.6459 8.85409C19.0327 9.24089 19.25 9.76549 19.25 10.3125V17.1875M11 11.6875H11.0073V11.6948H11V11.6875ZM11 13.75H11.0073V13.7573H11V13.75ZM11 15.8125H11.0073V15.8198H11V15.8125ZM8.9375 13.75H8.94483V13.7573H8.9375V13.75ZM8.9375 15.8125H8.94483V15.8198H8.9375V15.8125ZM6.875 13.75H6.88233V13.7573H6.875V13.75ZM6.875 15.8125H6.88233V15.8198H6.875V15.8125ZM13.0625 11.6875H13.0698V11.6948H13.0625V11.6875ZM13.0625 13.75H13.0698V13.7573H13.0625V13.75ZM13.0625 15.8125H13.0698V15.8198H13.0625V15.8125ZM15.125 11.6875H15.1323V11.6948H15.125V11.6875ZM15.125 13.75H15.1323V13.7573H15.125V13.75Z"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <strong>Daily games</strong>
+          </div>
+          <div id="overview-daily-games"></div>
+        </div>
+        <div class="pane">
+          <div class="icon-group">
+            <svg
+              width="23"
+              height="22"
+              viewBox="0 0 23 22"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M18.375 11C18.375 9.87067 18.3328 8.75142 18.2485 7.64317C18.1836 6.76514 17.8055 5.93963 17.1829 5.31708C16.5604 4.69453 15.7349 4.31637 14.8568 4.25151C12.6221 4.08291 10.3779 4.08291 8.14317 4.25151C7.26513 4.31637 6.43963 4.69453 5.81707 5.31708C5.19452 5.93963 4.81636 6.76514 4.7515 7.64317C4.73592 7.84484 4.72217 8.04742 4.70933 8.25001M18.375 11L21.125 8.25001M18.375 11L15.625 8.25001M4.625 11C4.625 12.1293 4.66717 13.2486 4.7515 14.3568C4.81636 15.2349 5.19452 16.0604 5.81707 16.6829C6.43963 17.3055 7.26513 17.6836 8.14317 17.7485C10.3779 17.9172 12.6221 17.9172 14.8568 17.7485C15.7349 17.6836 16.5604 17.3055 17.1829 16.6829C17.8055 16.0604 18.1836 15.2349 18.2485 14.3568C18.2641 14.1552 18.2778 13.9526 18.2907 13.75M4.625 11L7.375 13.75M4.625 11L1.875 13.75"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <strong>Random games</strong>
+          </div>
+          <span>Want more than one game a day? Try a random game!</span>
+          <div id="overview-random-games-container">
+            <button
+              id="overview-new-random-game"
+              class="small light-gray button"
+            >
+              <span>New random game</span>
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 15 15"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M7.5 2.8125V12.1875M12.1875 7.5H2.8125"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+            <div id="overview-random-games"></div>
+          </div>
+        </div>
+      </div>
+    </dialog>
+  </body>
+  <script id="variables">
+    const Constants = {
+      Api: {
+        Dict: "/dict.txt",
+      },
+      WordLength: 5,
+      Attempts: 6,
+      KeyboardInputPrompt: "Click here to use your keyboard.",
+      Colors: ["green", "yellow", "gray"],
+      BotTopChoices: 10,
+      RowSize: 4,
+      ColumnSize: 4,
+    };
+
+    const AppState = {
+      currentThemeKey: undefined,
+    };
+
+    let GameDict = undefined;
+    let ThemeHistory = {};
+    let ThemeState = {};
+    let GameState = {
+      /** [t o p  r o w , ... , ... , b o t t o m  r o w] */
+      board: new Array(Constants.RowSize * Constants.ColumnSize).fill(0),
+    };
+
+    const Bindings = {
+      Control: {
+        OverviewButton: {
+          Element: document.getElementById("overview-button"),
+          Listener: undefined,
+        },
+        OverviewCloseButton: {
+          Element: document.getElementById("overview-close-button"),
+          Listener: undefined,
+        },
+        OverviewNewRandomGame: {
+          Element: document.getElementById("overview-new-random-game"),
+          Listener: undefined,
+        },
+      },
+      Dialogs: {
+        OverviewDialog: document.getElementById("overview-dialog"),
+        OverviewDailyGames: document.getElementById("overview-daily-games"),
+        OverviewRandomGames: document.getElementById("overview-random-games"),
+      },
+      Document: {
+        Element: document,
+        Listener: undefined,
+      },
+    };
+  </script>
+  <script id="gamegen">
+    const loadDict = async (length) => {
+      if (GameDict && GameDict.has(length)) return GameDict.get(length);
+
+      if (!GameDict) {
+        GameDict = new Map();
+
+        const response = await fetch(Constants.Api.Dict);
+        const dict = await response.text();
+        const allWords = dict.split("\n").map((word) => word.trim());
+
+        GameDict.set(0, allWords);
+      }
+
+      const lengthWords = GameDict.get(0).filter(
+        (word) => word.length === length
+      );
+      GameDict.set(length, lengthWords);
+      return lengthWords;
+    };
+
+    // deterministically generates a valid game given a seed and length
+    const generateGame = async (seed, length = Constants.WordLength) => {
+      if (length < 4 || Number.isNaN(length))
+        throw new Error("Invalid length!");
+
+      performance.mark("generate-start");
+
+      // only loads dictionary if it doesn't exist
+      const dict = await loadDict(length);
+
+      const encoder = new TextEncoder();
+      const data = encoder.encode(seed);
+      const digest = await crypto.subtle.digest("SHA-1", data);
+
+      const view = new DataView(digest);
+      const index =
+        (view.getUint8(0) +
+          view.getUint8(1) *
+            view.getUint8(2) *
+            view.getUint8(3) *
+            view.getUint8(4)) %
+        dict.length;
+
+      performance.mark("generate-end");
+      const measure = performance.measure(
+        "generate-measure",
+        "generate-start",
+        "generate-end"
+      );
+      console.log(
+        `Took ${measure.duration.toFixed(2)}ms to generate latest game.`
+      );
+
+      return dict[index];
+    };
+  </script>
+  <script id="gameplay">
+    const moveColumnOrRow = (columnOrRow, moveLeft = false) => {
+      const normalized = moveLeft ? columnOrRow : columnOrRow.reverse();
+
+      let lastSeen;
+      let lastSeenIndex;
+      const output = [];
+      const diff = new Array(normalized.length).fill(0);
+
+      for (let i = 0; i < normalized.length; i++) {
+        let char = normalized[i];
+
+        if (char === 0) continue;
+
+        if (lastSeen) {
+          diff[lastSeenIndex] = lastSeenIndex - output.length;
+          if (char === lastSeen) {
+            diff[i] = i - output.length;
+            output.unshift(char + 1);
+            lastSeen = undefined;
+            lastSeenIndex = undefined;
+          } else {
+            output.unshift(lastSeen);
+            lastSeen = char;
+            lastSeenIndex = i;
+          }
+        } else {
+          lastSeen = char;
+          lastSeenIndex = i;
+        }
+      }
+
+      if (lastSeen) {
+        diff[lastSeenIndex] = lastSeenIndex - output.length;
+        output.unshift(lastSeen);
+      }
+
+      const padded = [
+        ...new Array(normalized.length - output.length).fill(0),
+        ...output,
+      ];
+
+      return {
+        board: moveLeft ? padded.reverse() : padded,
+        diff: moveLeft ? diff : diff.reverse(),
+      };
+    };
+
+    const boardToColumns = (board) => {
+      const columns = new Array(Constants.RowSize)
+        .fill(0)
+        .map(() => new Array(Constants.ColumnSize));
+      for (let i = 0; i < board.length; i++) {
+        columns[i % Constants.RowSize][Math.floor(i / Constants.ColumnSize)] =
+          board[i];
+      }
+      return columns;
+    };
+
+    const columnsToBoard = (columns) => {
+      const output = {
+        board: [],
+        diff: [],
+      };
+      for (let i = 0; i < columns.length; i++) {
+        for (let j = 0; j < columns[i].board.length; j++) {
+          output.board[i + Constants.RowSize * j] = columns[i].board[j];
+          output.diff[i + Constants.RowSize * j] = columns[i].diff[j];
+        }
+      }
+      return output;
+    };
+
+    const boardToRows = (board) => {
+      const rows = new Array(Constants.ColumnSize)
+        .fill(0)
+        .map(() => new Array(Constants.RowSize));
+      for (let i = 0; i < board.length; i++) {
+        rows[Math.floor(i / Constants.RowSize)][i % Constants.ColumnSize] =
+          board[i];
+      }
+      return rows;
+    };
+
+    const rowsToBoard = (rows) => {
+      const output = {
+        board: [],
+        diff: [],
+      };
+      for (let i = 0; i < rows.length; i++) {
+        for (let j = 0; j < rows[i].board.length; j++) {
+          output.board[i * Constants.RowSize + j] = rows[i].board[j];
+          output.diff[i * Constants.RowSize + j] = rows[i].diff[j];
+        }
+      }
+      return output;
+    };
+
+    const calculateBoard = (board) => {
+      return {
+        up: columnsToBoard(
+          boardToColumns(board).map((column) => moveColumnOrRow(column, true))
+        ),
+        down: columnsToBoard(
+          boardToColumns(board).map((column) => moveColumnOrRow(column, false))
+        ),
+        left: rowsToBoard(
+          boardToRows(board).map((row) => moveColumnOrRow(row, true))
+        ),
+        right: rowsToBoard(
+          boardToRows(board).map((row) => moveColumnOrRow(row, false))
+        ),
+      };
+    };
+
+    const switchTheme = async (themeKey) => {
+      if (!(themeKey in ThemeHistory))
+        throw new Error("Attempted to switch to nonexistent theme!");
+      AppState.currentThemeKey = themeKey;
+      ThemeState = ThemeHistory[AppState.currentThemeKey];
+      updateDisplayState();
+    };
+
+    const load = async () => {
+      GameState = {
+        board: new Array(Constants.RowSize * Constants.ColumnSize).fill(0),
+      };
+    };
+
+    const save = async () => {
+      window.localStorage.setItem("2048_History", JSON.stringify(ThemeHistory));
+    };
+
+    const updateDisplayState = () => {
+      Bindings.Word.ArchiveWord.innerHTML = GameState.word;
+
+      Bindings.Dialogs.ArchiveDialog.close();
+      if (GameState.archived && !GameState.attempts.includes(GameState.word)) {
+        Bindings.Dialogs.ArchiveDialog.show();
+      }
+
+      for (let i = 0; i < Constants.Attempts; i++) {
+        const attempt = GameState.attempts[i];
+
+        if (i < GameState.activeAttempt) {
+          if (attempt?.length !== GameState.length)
+            throw new Error("Game has misconfigured attempts!");
+
+          Bindings.Word[`Attempt${i + 1}`].innerHTML = attempt
+            .split("")
+            .map(
+              (letter, position) =>
+                `<div class="attempt-letter ${
+                  Constants.Colors[
+                    getWordLetterState(GameState.word, attempt, position)
+                  ]
+                }">${letter}</div>`
+            )
+            .join("");
+        } else if (i === GameState.activeAttempt) {
+          let innerHTML = "";
+
+          for (let j = 0; j < GameState.length; j++) {
+            innerHTML += `<div class="attempt-letter">${
+              attempt?.charAt(j) ?? ""
+            }</div>`;
+          }
+
+          Bindings.Word[`Attempt${i + 1}`].innerHTML = innerHTML;
+        } else {
+          Bindings.Word[`Attempt${i + 1}`].innerHTML = new Array(
+            GameState.length
+          )
+            .fill(0)
+            .map(() => '<div class="attempt-letter"></div>')
+            .join("");
+        }
+      }
+
+      Bindings.Dialogs.OverviewDailyGames.innerHTML = Object.entries(
+        ThemeHistory
+      )
+        .sort()
+        .reverse()
+        .reduce(
+          (innerHTML, [key, game]) =>
+            key === AppState.now || key.includes("+")
+              ? innerHTML
+              : (innerHTML += `<button data-game-key=${key} class="small ${
+                  AppState.currentGameKey === key ? "theme" : "light-gray"
+                } button">
+                    <span>
+                      <strong>
+                        ${key.slice(5, 7)}/${key.slice(8, 10)}
+                      </strong>
+                    </span>
+                    ${
+                      game.archived
+                        ? `<svg width="15" height="16" viewBox="0 0 15 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12.6562 4.85416L12.2656 11.4992C12.2446 11.8573 12.0874 12.1939 11.8264 12.44C11.5653 12.6861 11.22 12.823 10.8613 12.8229H4.13875C3.77998 12.823 3.43472 12.6861 3.17364 12.44C2.91257 12.1939 2.75542 11.8573 2.73438 11.4992L2.34375 4.85416M6.25 7.19791H8.75M2.10938 4.85416H12.8906C13.2787 4.85416 13.5938 4.53916 13.5938 4.15103V3.21353C13.5938 2.82541 13.2787 2.51041 12.8906 2.51041H2.10938C1.72125 2.51041 1.40625 2.82541 1.40625 3.21353V4.15103C1.40625 4.53916 1.72125 4.85416 2.10938 4.85416Z"  stroke-linecap="round" stroke-linejoin="round"/>
+                          </svg>`
+                        : ""
+                    }
+                  </button>`),
+          `<button data-game-key=${AppState.now} class="small ${
+            AppState.currentGameKey === AppState.now ? "theme" : "light-gray"
+          } button">
+            <span>
+              <strong>Today</strong>
+            </span>
+            ${
+              ThemeHistory[AppState.now].archived
+                ? `<svg width="15" height="16" viewBox="0 0 15 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12.6562 4.85416L12.2656 11.4992C12.2446 11.8573 12.0874 12.1939 11.8264 12.44C11.5653 12.6861 11.22 12.823 10.8613 12.8229H4.13875C3.77998 12.823 3.43472 12.6861 3.17364 12.44C2.91257 12.1939 2.75542 11.8573 2.73438 11.4992L2.34375 4.85416M6.25 7.19791H8.75M2.10938 4.85416H12.8906C13.2787 4.85416 13.5938 4.53916 13.5938 4.15103V3.21353C13.5938 2.82541 13.2787 2.51041 12.8906 2.51041H2.10938C1.72125 2.51041 1.40625 2.82541 1.40625 3.21353V4.15103C1.40625 4.53916 1.72125 4.85416 2.10938 4.85416Z"  stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>`
+                : ""
+            }
+          </button>`
+        );
+      Bindings.Dialogs.OverviewRandomGames.innerHTML = Object.entries(
+        ThemeHistory
+      )
+        .sort()
+        .reduce(
+          (innerHTML, [key, game]) =>
+            !key.includes("+")
+              ? innerHTML
+              : (innerHTML += `<button data-game-key=${key} class="small ${
+                  key === AppState.currentGameKey ? "theme" : "light-gray"
+                } button">
+                  <span>
+                    <strong>
+                      ${key.replace("+", " • ")}
+                    </strong>
+                  </span>
+                  ${
+                    game.archived
+                      ? `<svg width="15" height="16" viewBox="0 0 15 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M12.6562 4.85416L12.2656 11.4992C12.2446 11.8573 12.0874 12.1939 11.8264 12.44C11.5653 12.6861 11.22 12.823 10.8613 12.8229H4.13875C3.77998 12.823 3.43472 12.6861 3.17364 12.44C2.91257 12.1939 2.75542 11.8573 2.73438 11.4992L2.34375 4.85416M6.25 7.19791H8.75M2.10938 4.85416H12.8906C13.2787 4.85416 13.5938 4.53916 13.5938 4.15103V3.21353C13.5938 2.82541 13.2787 2.51041 12.8906 2.51041H2.10938C1.72125 2.51041 1.40625 2.82541 1.40625 3.21353V4.15103C1.40625 4.53916 1.72125 4.85416 2.10938 4.85416Z"  stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>`
+                      : ""
+                  }
+                </button>`),
+          ""
+        );
+
+      updateButtonBindings();
+
+      try {
+        updateAnalysis(
+          !!Bindings.Control.MoreStrictModeCheckbox.Element.checked
+        );
+      } catch (err) {
+        console.log(`Error rendering analysis, maybe it's out of date?`);
+        delete GameState.analysis;
+        delete GameState.strictAnalysis;
+        updateDisplayState();
+      }
+
+      save();
+    };
+
+    const updateLetter = (attempt, char, letter) => {
+      const attemptRow = Bindings.Word[`Attempt${attempt + 1}`];
+      const attemptLetter = attemptRow.querySelector(
+        `.attempt-letter:nth-child(${char + 1})`
+      );
+
+      if (!attemptLetter)
+        throw new Error(
+          `Attempt ${attempt} char ${char} not found when trying to update to ${letter}`
+        );
+
+      if (letter) {
+        attemptLetter.innerHTML = letter;
+        attemptLetter.classList.add("pulse");
+      } else {
+        attemptLetter.innerHTML = "";
+        attemptLetter.classList.remove("pulse");
+      }
+
+      /**
+       * Handle horizontal scrolling
+       */
+      const attemptLength = GameState.attempts[attempt]?.length ?? 0;
+
+      const containerPaddingLeft =
+        parseFloat(getComputedStyle(Bindings.Word.Container).paddingLeft) || 0;
+      const containerPaddingRight =
+        parseFloat(getComputedStyle(Bindings.Word.Container).paddingRight) || 0;
+      const containerColumnGap =
+        parseFloat(getComputedStyle(Bindings.Word.Container).columnGap) || 0;
+      const letterWidth =
+        parseFloat(
+          getComputedStyle(document.querySelector(".attempt-letter")).width
+        ) || 0;
+      const windowWidth = window.innerWidth;
+
+      /**
+       * The cursor (or last non-empty square) must be at least
+       * one padding's length away from the left edge.
+       */
+      const maxScrollLeft =
+        (attemptLength - 1) * (letterWidth + containerColumnGap);
+
+      /**
+       * The cursor must be at most one padding's length away
+       * from the right edge.
+       */
+      const lengthToCursor =
+        containerPaddingLeft +
+        (attemptLength - 1) * (letterWidth + containerColumnGap);
+      const overflow = lengthToCursor - windowWidth;
+      const minScrollLeft = overflow + letterWidth + containerPaddingRight;
+
+      const currentScrollLeft = Bindings.Word.Container.scrollLeft;
+      Bindings.Word.Container.scrollLeft = Math.max(
+        Math.min(currentScrollLeft, maxScrollLeft),
+        minScrollLeft
+      );
+      Bindings.Word.Container.scrollIntoView();
+
+      save();
+    };
+
+    const updateAttempt = async (word, attempt, letters) => {
+      const attemptRow = Bindings.Word[`Attempt${attempt}`];
+      const attemptLetters = attemptRow.querySelectorAll(".attempt-letter");
+
+      for (let i = 0; i < attemptLetters.length; i++) {
+        const attemptLetter = attemptLetters[i];
+
+        const shrinkAnimation = attemptLetter.animate(
+          [
+            { transform: "perspective(12rem) rotate3d(0, 1, 0, 0deg)" },
+            { transform: "perspective(12rem) rotate3d(0, 1, 0, 90deg)" },
+          ],
+          { duration: 150, easing: "ease-out", fill: "forwards" }
+        );
+        await shrinkAnimation.finished;
+        attemptLetters[i].classList.add(
+          "submitted",
+          Constants.Colors[getWordLetterState(word, letters, i)]
+        );
+        const growAnimation = attemptLetter.animate(
+          [
+            { transform: "perspective(12rem) rotate3d(0, 1, 0, 270deg)" },
+            { transform: "perspective(12rem) rotate3d(0, 1, 0, 360deg)" },
+          ],
+          { duration: 200, easing: "ease-out", fill: "forwards" }
+        );
+        if (i === attemptLetters.length - 1) {
+          await growAnimation.finished;
+        }
+      }
+
+      if (GameState.attempts[attempt - 1] === word) {
+        for (let i = 0; i < attemptLetters.length; i++) {
+          const attemptLetter = attemptLetters[i];
+
+          const jumpAnimation = attemptLetter.animate(
+            [
+              { transform: "translateY(0)" },
+              { transform: "translateY(-1rem)" },
+            ],
+            { duration: 125, easing: "ease-out", fill: "forwards" }
+          );
+          await jumpAnimation.finished;
+          const fallAnimation = attemptLetter.animate(
+            [
+              { transform: "translateY(-1rem)" },
+              { transform: "translateY(0rem)" },
+            ],
+            { duration: 75, easing: "ease-out", fill: "forwards" }
+          );
+          if (i === attemptLetters.length - 1) {
+            await fallAnimation.finished;
+          }
+        }
+      }
+
+      save();
+    };
+
+    const clearBinding = (binding, event = "pointerdown") => {
+      binding.Element.removeEventListener("pointerdown", binding.Listener);
+    };
+
+    const updateBinding = (binding, callback, event = "pointerdown") => {
+      binding.Element.removeEventListener(event, binding.Listener);
+      binding.Listener = callback;
+      binding.Element.addEventListener(event, binding.Listener);
+    };
+
+    const updateButtonBindings = () => {
+      if (GameState.archived) {
+        Bindings.Control.MoreButton.Element.removeAttribute("disabled");
+
+        clearBinding(Bindings.Document, "keydown");
+
+        Bindings.Interactive.InputInput.Element.setAttribute("disabled", true);
+        clearBinding(Bindings.Interactive.InputKeyup, "keyup");
+        clearBinding(Bindings.Interactive.InputInput, "input");
+
+        Bindings.Interactive.Enter.Element.setAttribute("disabled", true);
+        clearBinding(Bindings.Interactive.Enter);
+
+        Bindings.Interactive.Delete.Element.setAttribute("disabled", true);
+        clearBinding(Bindings.Interactive.Delete);
+
+        Bindings.Interactive.Letters.forEach((Binding) => {
+          Binding.Element.classList.remove("green");
+          Binding.Element.classList.remove("yellow");
+          Binding.Element.classList.remove("gray");
+
+          if (GameState.word.includes(Binding.Element.dataset.letter))
+            Binding.Element.classList.add("green");
+          Binding.Element.setAttribute("disabled", true);
+          clearBinding(Binding);
+        });
+      } else {
+        Bindings.Control.MoreButton.Element.setAttribute("disabled", true);
+        Bindings.Interactive.InputInput.Element.removeAttribute("disabled");
+        Bindings.Interactive.Enter.Element.removeAttribute("disabled");
+        Bindings.Interactive.Delete.Element.removeAttribute("disabled");
+
+        const onEnter = async () => {
+          const attempt = GameState.attempts[GameState.activeAttempt];
+
+          if (
+            attempt &&
+            attempt.length === GameState.length &&
+            GameDict.get(GameState.length)?.includes(attempt)
+          ) {
+            GameState.activeAttempt = GameState.activeAttempt + 1;
+
+            if (
+              GameState.activeAttempt >= Constants.Attempts ||
+              GameState.attempts.includes(GameState.word)
+            ) {
+              GameState.archived = true;
+              await updateAttempt(
+                GameState.word,
+                GameState.activeAttempt,
+                attempt
+              );
+              updateDisplayState();
+            } else {
+              updateAttempt(GameState.word, GameState.activeAttempt, attempt);
+              updateButtonBindings();
+            }
+          } else {
+            Bindings.Word[`Attempt${GameState.activeAttempt + 1}`].animate(
+              new Array(9).fill(0).map((_, index) => ({
+                transform: `translate(${~~(index / 2) % 2 === 0 ? "" : "-"}${
+                  index % 2 === 0 ? "0" : "0.25"
+                }rem)`,
+              })),
+              { duration: 360, easing: "linear", fill: "forwards" }
+            );
+
+            updateDisplayState();
+          }
+        };
+        updateBinding(Bindings.Interactive.Enter, onEnter);
+
+        const onDelete = () => {
+          const attempt = GameState.attempts[GameState.activeAttempt];
+
+          if (attempt && attempt.length > 0) {
+            GameState.attempts[GameState.activeAttempt] = attempt.slice(
+              0,
+              attempt.length - 1
+            );
+
+            updateLetter(GameState.activeAttempt, attempt.length - 1);
+          }
+        };
+        updateBinding(Bindings.Interactive.Delete, onDelete);
+
+        const onLetter = (letter) => {
+          const attempt = GameState.attempts[GameState.activeAttempt];
+
+          if (!attempt || attempt.length < GameState.length) {
+            GameState.attempts[GameState.activeAttempt] =
+              (attempt ?? "") + letter;
+
+            updateLetter(GameState.activeAttempt, attempt?.length ?? 0, letter);
+          }
+        };
+        for (const Binding of Bindings.Interactive.Letters) {
+          Binding.Element.classList.remove("green");
+          Binding.Element.classList.remove("yellow");
+          Binding.Element.classList.remove("gray");
+          Binding.Element.removeAttribute("disabled");
+
+          const letterState = getLetterState(
+            GameState.word,
+            Binding.Element.dataset.letter,
+            GameState.attempts.slice(0, GameState.activeAttempt)
+          );
+          if (letterState) Binding.Element.classList.add(letterState);
+
+          updateBinding(Binding, () =>
+            onLetter(Binding.Element.dataset.letter)
+          );
+        }
+
+        updateBinding(
+          Bindings.Interactive.InputInput,
+          (e) => {
+            Bindings.Interactive.InputInput.Element.value =
+              Constants.KeyboardInputPrompt;
+
+            if (e.inputType === "deleteContentBackward") return onDelete();
+
+            for (const { Element } of Bindings.Interactive.Letters) {
+              if (
+                e.data?.toLowerCase() === Element.dataset.letter &&
+                !(e.altKey || e.ctrlKey || e.metaKey || e.shiftKey)
+              ) {
+                onLetter(Element.dataset.letter);
+              }
+            }
+          },
+          "input"
+        );
+
+        updateBinding(
+          Bindings.Interactive.InputKeyup,
+          (e) => {
+            if (e.key === "Enter") return onEnter();
+          },
+          "keyup"
+        );
+
+        updateBinding(
+          Bindings.Document,
+          (e) => {
+            if (Bindings.Interactive.InputInput.Element.contains(e.target))
+              return;
+
+            if (e.key === "Enter") onEnter();
+            if (e.key === "Backspace") onDelete();
+
+            for (const { Element } of Bindings.Interactive.Letters) {
+              if (
+                e.key.toLowerCase() === Element.dataset.letter &&
+                !(e.altKey || e.ctrlKey || e.metaKey || e.shiftKey)
+              ) {
+                onLetter(Element.dataset.letter);
+              }
+            }
+          },
+          "keydown"
+        );
+      }
+
+      Bindings.Dialogs.OverviewDialog.querySelectorAll(
+        "button[data-game-key]"
+      ).forEach((button) =>
+        button.addEventListener("click", () => {
+          const key = button.dataset.gameKey;
+
+          if (
+            AppState.currentGameKey === key &&
+            AppState.currentGameKey !== AppState.now &&
+            confirm(`Delete game ${key.replace("+", " • ")}?`)
+          ) {
+            delete ThemeHistory[key];
+            switchGame(AppState.now);
+          } else {
+            switchGame(key);
+            Bindings.Dialogs.OverviewDialog.close();
+            Bindings.Control.OverviewButton.Element.blur();
+          }
+        })
+      );
+    };
+
+    const updateControlButtonsOnce = () => {
+      updateBinding(
+        Bindings.Control.OverviewButton,
+        () => {
+          Bindings.Dialogs.OverviewDialog.showModal();
+        },
+        "click"
+      );
+      updateBinding(
+        Bindings.Control.OverviewCloseButton,
+        () => {
+          Bindings.Dialogs.OverviewDialog.close();
+          Bindings.Control.OverviewButton.Element.blur();
+        },
+        "click"
+      );
+      updateBinding(
+        Bindings.Control.OverviewNewRandomGame,
+        async () => {
+          const lengthString = prompt(
+            "How long should the word be? Choose any number greater than 4.",
+            "5"
+          );
+
+          if (
+            !lengthString ||
+            Number.isNaN(parseInt(lengthString)) ||
+            parseInt(lengthString) < 4
+          ) {
+            alert("That isn't a valid length!");
+          } else {
+            const length = parseInt(lengthString);
+
+            await loadRandom(length);
+            Bindings.Dialogs.OverviewDialog.close();
+            Bindings.Control.OverviewButton.Element.blur();
+          }
+        },
+        "click"
+      );
+    };
+  </script>
+  <script id="run">
+    const play = async () => {
+      await load();
+
+      updateControlButtonsOnce();
+
+      Object.entries(ThemeHistory).forEach(([key, game]) => {
+        if (key !== AppState.now && !key.includes("+")) {
+          archiveGame(key);
+        }
+      });
+
+      if ("serviceWorker" in navigator) {
+        await navigator.serviceWorker.register("./sw.js", {
+          scope: "/",
+        });
+      }
+    };
+
+    play();
+  </script>
+</html>
