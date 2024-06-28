@@ -7,7 +7,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
-    <meta name="theme-color" content="#F2A5FF" />
+    <meta id="meta-theme-color" name="theme-color" content="#F2A5FF" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -811,6 +811,10 @@
     };
 
     const Bindings = {
+      Meta: {
+        Root: document.documentElement,
+        Theme: document.getElementById("meta-theme-color"),
+      },
       Control: {
         OverviewButton: {
           Element: document.getElementById("overview-button"),
@@ -1280,7 +1284,8 @@
     };
 
     const updateDisplayState = () => {
-      document.documentElement.style.setProperty("--theme", ThemeState.theme);
+      Bindings.Meta.Root.style.setProperty("--theme", ThemeState.theme);
+      Bindings.Meta.Theme.setAttribute("content", ThemeState.theme);
 
       if (
         ThemeState.map &&
