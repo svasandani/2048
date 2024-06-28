@@ -297,35 +297,75 @@
 
         display: grid;
         grid-template-rows: 1fr;
-        place-content: center;
+        align-items: center;
+        justify-content: stretch;
+        padding: 2rem;
       }
 
       #board-container {
         position: relative;
-        margin: 2rem;
+        overflow: hidden;
+
+        height: 100%;
+        width: 100%;
+      }
+      #board-container.lost .board:not(#lost) {
+        opacity: 0.1;
+        transition: 205ms ease-out;
       }
       .board {
         position: absolute;
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
+        width: min(100%, 30rem);
 
         display: grid;
         grid-template-columns: repeat(var(--rowsize, 4), 1fr);
         grid-template-rows: repeat(var(--columnsize, 4), 1fr);
-        gap: 0.25rem;
+        gap: min(2vw, 1rem);
 
         padding: 1rem;
+      }
+      #board-container .board.invisible {
+        opacity: 0;
+        pointer-events: none;
       }
       #board {
         background-color: var(--lightest-gray);
         border-radius: 0.5rem;
       }
-      .board-square {
-        width: 4rem;
-        height: 4rem;
-        border: 1px solid var(--light-gray);
+      #anim {
+        pointer-events: none;
+      }
+      #state {
+        pointer-events: none;
+      }
+      .board-square,
+      .board-piece {
+        width: 100%;
+        height: 100%;
+        aspect-ratio: 1 / 1;
         border-radius: 0.25rem;
+      }
+      .board-square {
+        background-color: var(--light-gray);
+      }
+      .board-piece {
+        display: grid;
+        place-content: center;
+
+        font-size: min(6vw, 2rem);
+        font-weight: bold;
+        background-color: var(--theme-accent);
+      }
+      .board-piece.invisible {
+        visibility: hidden;
+      }
+      #lost {
+        display: flex;
+        flex-flow: column nowrap;
+        align-items: center;
       }
 
       #overview-daily-games,
@@ -418,8 +458,12 @@
             <div class="board-square"></div>
             <div class="board-square"></div>
           </div>
-          <div id="state" class="board"></div>
           <div id="anim" class="board"></div>
+          <div id="state" class="board"></div>
+          <div id="lost" class="board invisible">
+            <span>No valid moves left!</span>
+            <button id="lost-reset" class="theme button">Start new game</button>
+          </div>
         </div>
       </section>
     </main>
@@ -522,6 +566,19 @@
       BotTopChoices: 10,
       RowSize: 4,
       ColumnSize: 4,
+      HigherTierProbability: 0.1,
+      KeyBindings: {
+        up: ["ArrowUp", "w"],
+        down: ["ArrowDown", "s"],
+        left: ["ArrowLeft", "a"],
+        right: ["ArrowRight", "d"],
+      },
+      Transforms: {
+        up: (px) => `translateY(calc(-1 * ${px}px))`,
+        down: (px) => `translateY(${px}px)`,
+        left: (px) => `translateX(calc(-1 * ${px}px))`,
+        right: (px) => `translateX(${px}px)`,
+      },
     };
 
     const AppState = {
@@ -534,6 +591,9 @@
     let GameState = {
       /** [t o p  r o w , ... , ... , b o t t o m  r o w] */
       board: new Array(Constants.RowSize * Constants.ColumnSize).fill(0),
+    };
+    let SwipeState = {
+      active: false,
     };
 
     const Bindings = {
@@ -550,73 +610,39 @@
           Element: document.getElementById("overview-new-random-game"),
           Listener: undefined,
         },
+        ResetButton: {
+          Element: document.getElementById("lost-reset"),
+          Listener: undefined,
+        },
       },
       Dialogs: {
         OverviewDialog: document.getElementById("overview-dialog"),
         OverviewDailyGames: document.getElementById("overview-daily-games"),
         OverviewRandomGames: document.getElementById("overview-random-games"),
       },
+      Board: {
+        Container: document.getElementById("board-container"),
+        Board: document.getElementById("board"),
+        Animation: document.getElementById("anim"),
+        State: document.getElementById("state"),
+        Lost: document.getElementById("lost"),
+        BoardTouchStart: {
+          Element: document.getElementById("board"),
+          Listener: undefined,
+        },
+        BoardTouchMove: {
+          Element: document.getElementById("board"),
+          Listener: undefined,
+        },
+        BoardTouchEnd: {
+          Element: document.getElementById("board"),
+          Listener: undefined,
+        },
+      },
       Document: {
         Element: document,
         Listener: undefined,
       },
-    };
-  </script>
-  <script id="gamegen">
-    const loadDict = async (length) => {
-      if (GameDict && GameDict.has(length)) return GameDict.get(length);
-
-      if (!GameDict) {
-        GameDict = new Map();
-
-        const response = await fetch(Constants.Api.Dict);
-        const dict = await response.text();
-        const allWords = dict.split("\n").map((word) => word.trim());
-
-        GameDict.set(0, allWords);
-      }
-
-      const lengthWords = GameDict.get(0).filter(
-        (word) => word.length === length
-      );
-      GameDict.set(length, lengthWords);
-      return lengthWords;
-    };
-
-    // deterministically generates a valid game given a seed and length
-    const generateGame = async (seed, length = Constants.WordLength) => {
-      if (length < 4 || Number.isNaN(length))
-        throw new Error("Invalid length!");
-
-      performance.mark("generate-start");
-
-      // only loads dictionary if it doesn't exist
-      const dict = await loadDict(length);
-
-      const encoder = new TextEncoder();
-      const data = encoder.encode(seed);
-      const digest = await crypto.subtle.digest("SHA-1", data);
-
-      const view = new DataView(digest);
-      const index =
-        (view.getUint8(0) +
-          view.getUint8(1) *
-            view.getUint8(2) *
-            view.getUint8(3) *
-            view.getUint8(4)) %
-        dict.length;
-
-      performance.mark("generate-end");
-      const measure = performance.measure(
-        "generate-measure",
-        "generate-start",
-        "generate-end"
-      );
-      console.log(
-        `Took ${measure.duration.toFixed(2)}ms to generate latest game.`
-      );
-
-      return dict[index];
     };
   </script>
   <script id="gameplay">
@@ -627,6 +653,7 @@
       let lastSeenIndex;
       const output = [];
       const diff = new Array(normalized.length).fill(0);
+      const combined = new Array(normalized.length).fill(0);
 
       for (let i = 0; i < normalized.length; i++) {
         let char = normalized[i];
@@ -637,6 +664,7 @@
           diff[lastSeenIndex] = lastSeenIndex - output.length;
           if (char === lastSeen) {
             diff[i] = i - output.length;
+            combined[output.length] = char + 1;
             output.unshift(char + 1);
             lastSeen = undefined;
             lastSeenIndex = undefined;
@@ -664,6 +692,7 @@
       return {
         board: moveLeft ? padded.reverse() : padded,
         diff: moveLeft ? diff : diff.reverse(),
+        combined: moveLeft ? combined : combined.reverse(),
       };
     };
 
@@ -682,11 +711,13 @@
       const output = {
         board: [],
         diff: [],
+        combined: [],
       };
       for (let i = 0; i < columns.length; i++) {
         for (let j = 0; j < columns[i].board.length; j++) {
           output.board[i + Constants.RowSize * j] = columns[i].board[j];
           output.diff[i + Constants.RowSize * j] = columns[i].diff[j];
+          output.combined[i + Constants.RowSize * j] = columns[i].combined[j];
         }
       }
       return output;
@@ -707,11 +738,13 @@
       const output = {
         board: [],
         diff: [],
+        combined: [],
       };
       for (let i = 0; i < rows.length; i++) {
         for (let j = 0; j < rows[i].board.length; j++) {
           output.board[i * Constants.RowSize + j] = rows[i].board[j];
           output.diff[i * Constants.RowSize + j] = rows[i].diff[j];
+          output.combined[i * Constants.RowSize + j] = rows[i].combined[j];
         }
       }
       return output;
@@ -734,6 +767,69 @@
       };
     };
 
+    const addNewPieces = (board, pieces = 1) => {
+      const emptySquares = board.filter((square) => square === 0).length;
+      const targetEmptySquares = new Set();
+      while (targetEmptySquares.size < pieces) {
+        targetEmptySquares.add(Math.floor(Math.random() * emptySquares));
+      }
+
+      const targetSquares = new Set();
+      let currentEmptySquare = 0;
+      for (let i = 0; i < GameState.board.length; i++) {
+        if (board[i] !== 0) continue;
+
+        if (targetEmptySquares.has(currentEmptySquare)) {
+          targetSquares.add(i);
+          board[i] = Math.random() < Constants.HigherTierProbability ? 2 : 1;
+        }
+
+        currentEmptySquare++;
+      }
+
+      return {
+        board,
+        targetSquares,
+      };
+    };
+
+    const moveBoard = async (move) => {
+      if (!GameState.premove)
+        GameState.premove = calculateBoard(GameState.board);
+
+      const state = GameState.premove[move];
+      const isValidMove = state.diff.some((diff) => diff !== 0);
+
+      if (!isValidMove) return;
+
+      const previousBoard = GameState.board;
+
+      const { board: newBoard, targetSquares } = addNewPieces(state.board);
+
+      GameState.board = newBoard;
+
+      GameState.premove = calculateBoard(GameState.board);
+
+      if (
+        Object.values(GameState.premove).every(({ diff }) =>
+          diff.every((diff) => diff === 0)
+        )
+      ) {
+        GameState.lost = true;
+      }
+
+      await animateState(
+        previousBoard,
+        newBoard,
+        targetSquares,
+        state.diff,
+        state.combined,
+        move
+      );
+
+      updateDisplayState();
+    };
+
     const switchTheme = async (themeKey) => {
       if (!(themeKey in ThemeHistory))
         throw new Error("Attempted to switch to nonexistent theme!");
@@ -742,61 +838,168 @@
       updateDisplayState();
     };
 
-    const load = async () => {
+    const reset = async () => {
+      const emptyBoard = () =>
+        new Array(Constants.RowSize * Constants.ColumnSize).fill(0);
+
+      const { board, targetSquares } = addNewPieces(emptyBoard(), 2);
+
       GameState = {
-        board: new Array(Constants.RowSize * Constants.ColumnSize).fill(0),
+        board,
       };
+
+      await animateState(
+        emptyBoard(),
+        GameState.board,
+        targetSquares,
+        emptyBoard(),
+        emptyBoard()
+      );
+
+      updateDisplayState();
+    };
+
+    const load = async () => {
+      const localThemeHistoryString =
+        window.localStorage.getItem("2048_History");
+
+      if (localThemeHistoryString) {
+        ThemeHistory = JSON.parse(localThemeHistoryString);
+      }
+
+      const emptyBoard = () =>
+        new Array(Constants.RowSize * Constants.ColumnSize).fill(0);
+
+      GameState = {
+        board: emptyBoard(),
+      };
+
+      const localGameStateString = window.localStorage.getItem("2048_State");
+
+      if (localGameStateString) {
+        GameState = JSON.parse(localGameStateString);
+      } else {
+        const { board } = addNewPieces(emptyBoard(), 2);
+
+        GameState = {
+          board,
+        };
+      }
+
+      await animateState(
+        emptyBoard(),
+        GameState.board,
+        GameState.board.reduce(
+          (set, square, index) => (square === 0 ? set : set.add(index)),
+          new Set()
+        ),
+        emptyBoard(),
+        emptyBoard()
+      );
+
+      updateDisplayState();
     };
 
     const save = async () => {
+      window.localStorage.setItem("2048_State", JSON.stringify(GameState));
       window.localStorage.setItem("2048_History", JSON.stringify(ThemeHistory));
     };
 
-    const updateDisplayState = () => {
-      Bindings.Word.ArchiveWord.innerHTML = GameState.word;
+    const getThemedPiece = (state, customClasses = "") =>
+      `<div data-state="${state}" class="board-piece ${
+        state === 0 ? "invisible" : ""
+      } ${customClasses}">${Math.pow(2, state)}</div>`;
 
-      Bindings.Dialogs.ArchiveDialog.close();
-      if (GameState.archived && !GameState.attempts.includes(GameState.word)) {
-        Bindings.Dialogs.ArchiveDialog.show();
-      }
+    const animateState = async (
+      previousBoard,
+      newBoard,
+      targetSquares,
+      diff,
+      combined,
+      move = "left"
+    ) => {
+      if (GameState.lost) return;
 
-      for (let i = 0; i < Constants.Attempts; i++) {
-        const attempt = GameState.attempts[i];
+      Bindings.Board.Animation.innerHTML = previousBoard
+        .map((state, index) =>
+          /** @todo theme */
+          getThemedPiece(state)
+        )
+        .join("");
 
-        if (i < GameState.activeAttempt) {
-          if (attempt?.length !== GameState.length)
-            throw new Error("Game has misconfigured attempts!");
+      const moveAnimationPieces = Array.from(
+        document.querySelectorAll("#anim .board-piece")
+      );
 
-          Bindings.Word[`Attempt${i + 1}`].innerHTML = attempt
-            .split("")
-            .map(
-              (letter, position) =>
-                `<div class="attempt-letter ${
-                  Constants.Colors[
-                    getWordLetterState(GameState.word, attempt, position)
-                  ]
-                }">${letter}</div>`
-            )
-            .join("");
-        } else if (i === GameState.activeAttempt) {
-          let innerHTML = "";
+      Bindings.Board.Animation.classList.remove("invisible");
+      Bindings.Board.State.classList.add("invisible");
 
-          for (let j = 0; j < GameState.length; j++) {
-            innerHTML += `<div class="attempt-letter">${
-              attempt?.charAt(j) ?? ""
-            }</div>`;
-          }
+      const movePx =
+        parseFloat(getComputedStyle(Bindings.Board.Animation).gap) +
+        moveAnimationPieces[0].getBoundingClientRect().width;
 
-          Bindings.Word[`Attempt${i + 1}`].innerHTML = innerHTML;
-        } else {
-          Bindings.Word[`Attempt${i + 1}`].innerHTML = new Array(
-            GameState.length
-          )
-            .fill(0)
-            .map(() => '<div class="attempt-letter"></div>')
-            .join("");
+      const moveAnimationPromises = [];
+
+      for (let i = 0; i < diff.length; i++) {
+        if (diff[i] > 0) {
+          const moveAnimation = moveAnimationPieces[i].animate(
+            [
+              { transform: "translateX(0) translateY(0)" },
+              { transform: Constants.Transforms[move](diff[i] * movePx) },
+            ],
+            { duration: 105, easing: "ease-in", fill: "forwards" }
+          );
+          moveAnimationPromises.push(moveAnimation.finished);
         }
       }
+
+      await Promise.all(moveAnimationPromises);
+
+      Bindings.Board.Animation.innerHTML = newBoard
+        .map((state, index) =>
+          /** @todo theme */
+          getThemedPiece(state)
+        )
+        .join("");
+
+      const growAnimationPieces = Array.from(
+        document.querySelectorAll("#anim .board-piece")
+      );
+
+      const growAnimationPromises = [];
+
+      for (let i = 0; i < combined.length; i++) {
+        if (targetSquares.has(i) || combined[i] > 0) {
+          growAnimationPieces[i].classList.remove("invisible");
+          const growAnimation = growAnimationPieces[i].animate(
+            [{ transform: "scale(0.6)" }, { transform: "scale(1)" }],
+            { duration: 105, easing: "ease-out", fill: "forwards" }
+          );
+          growAnimationPromises.push(growAnimation.finished);
+        }
+      }
+
+      await Promise.all(growAnimationPromises);
+    };
+
+    const updateDisplayState = () => {
+      if (GameState.lost) {
+        Bindings.Board.Container.classList.add("lost");
+        Bindings.Board.Lost.classList.remove("invisible");
+      } else {
+        Bindings.Board.Container.classList.remove("lost");
+        Bindings.Board.Lost.classList.add("invisible");
+      }
+
+      Bindings.Board.State.classList.remove("invisible");
+      Bindings.Board.Animation.classList.add("invisible");
+
+      Bindings.Board.State.innerHTML = GameState.board
+        .map((state) =>
+          /** @todo theme */
+          getThemedPiece(state)
+        )
+        .join("");
 
       Bindings.Dialogs.OverviewDailyGames.innerHTML = Object.entries(
         ThemeHistory
@@ -804,38 +1007,24 @@
         .sort()
         .reverse()
         .reduce(
-          (innerHTML, [key, game]) =>
+          (innerHTML, [key, theme]) =>
             key === AppState.now || key.includes("+")
               ? innerHTML
-              : (innerHTML += `<button data-game-key=${key} class="small ${
-                  AppState.currentGameKey === key ? "theme" : "light-gray"
+              : (innerHTML += `<button data-theme-key=${key} class="small ${
+                  AppState.currentThemeKey === key ? "theme" : "light-gray"
                 } button">
                     <span>
                       <strong>
                         ${key.slice(5, 7)}/${key.slice(8, 10)}
                       </strong>
                     </span>
-                    ${
-                      game.archived
-                        ? `<svg width="15" height="16" viewBox="0 0 15 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12.6562 4.85416L12.2656 11.4992C12.2446 11.8573 12.0874 12.1939 11.8264 12.44C11.5653 12.6861 11.22 12.823 10.8613 12.8229H4.13875C3.77998 12.823 3.43472 12.6861 3.17364 12.44C2.91257 12.1939 2.75542 11.8573 2.73438 11.4992L2.34375 4.85416M6.25 7.19791H8.75M2.10938 4.85416H12.8906C13.2787 4.85416 13.5938 4.53916 13.5938 4.15103V3.21353C13.5938 2.82541 13.2787 2.51041 12.8906 2.51041H2.10938C1.72125 2.51041 1.40625 2.82541 1.40625 3.21353V4.15103C1.40625 4.53916 1.72125 4.85416 2.10938 4.85416Z"  stroke-linecap="round" stroke-linejoin="round"/>
-                          </svg>`
-                        : ""
-                    }
                   </button>`),
-          `<button data-game-key=${AppState.now} class="small ${
-            AppState.currentGameKey === AppState.now ? "theme" : "light-gray"
+          `<button data-theme-key=${AppState.now} class="small ${
+            AppState.currentThemeKey === AppState.now ? "theme" : "light-gray"
           } button">
             <span>
               <strong>Today</strong>
             </span>
-            ${
-              ThemeHistory[AppState.now].archived
-                ? `<svg width="15" height="16" viewBox="0 0 15 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12.6562 4.85416L12.2656 11.4992C12.2446 11.8573 12.0874 12.1939 11.8264 12.44C11.5653 12.6861 11.22 12.823 10.8613 12.8229H4.13875C3.77998 12.823 3.43472 12.6861 3.17364 12.44C2.91257 12.1939 2.75542 11.8573 2.73438 11.4992L2.34375 4.85416M6.25 7.19791H8.75M2.10938 4.85416H12.8906C13.2787 4.85416 13.5938 4.53916 13.5938 4.15103V3.21353C13.5938 2.82541 13.2787 2.51041 12.8906 2.51041H2.10938C1.72125 2.51041 1.40625 2.82541 1.40625 3.21353V4.15103C1.40625 4.53916 1.72125 4.85416 2.10938 4.85416Z"  stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>`
-                : ""
-            }
           </button>`
         );
       Bindings.Dialogs.OverviewRandomGames.innerHTML = Object.entries(
@@ -843,168 +1032,28 @@
       )
         .sort()
         .reduce(
-          (innerHTML, [key, game]) =>
+          (innerHTML, [key, theme]) =>
             !key.includes("+")
               ? innerHTML
-              : (innerHTML += `<button data-game-key=${key} class="small ${
-                  key === AppState.currentGameKey ? "theme" : "light-gray"
+              : (innerHTML += `<button data-theme-key=${key} class="small ${
+                  key === AppState.currentThemeKey ? "theme" : "light-gray"
                 } button">
                   <span>
                     <strong>
                       ${key.replace("+", " • ")}
                     </strong>
                   </span>
-                  ${
-                    game.archived
-                      ? `<svg width="15" height="16" viewBox="0 0 15 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M12.6562 4.85416L12.2656 11.4992C12.2446 11.8573 12.0874 12.1939 11.8264 12.44C11.5653 12.6861 11.22 12.823 10.8613 12.8229H4.13875C3.77998 12.823 3.43472 12.6861 3.17364 12.44C2.91257 12.1939 2.75542 11.8573 2.73438 11.4992L2.34375 4.85416M6.25 7.19791H8.75M2.10938 4.85416H12.8906C13.2787 4.85416 13.5938 4.53916 13.5938 4.15103V3.21353C13.5938 2.82541 13.2787 2.51041 12.8906 2.51041H2.10938C1.72125 2.51041 1.40625 2.82541 1.40625 3.21353V4.15103C1.40625 4.53916 1.72125 4.85416 2.10938 4.85416Z"  stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>`
-                      : ""
-                  }
                 </button>`),
           ""
         );
 
       updateButtonBindings();
 
-      try {
-        updateAnalysis(
-          !!Bindings.Control.MoreStrictModeCheckbox.Element.checked
-        );
-      } catch (err) {
-        console.log(`Error rendering analysis, maybe it's out of date?`);
-        delete GameState.analysis;
-        delete GameState.strictAnalysis;
-        updateDisplayState();
-      }
-
-      save();
-    };
-
-    const updateLetter = (attempt, char, letter) => {
-      const attemptRow = Bindings.Word[`Attempt${attempt + 1}`];
-      const attemptLetter = attemptRow.querySelector(
-        `.attempt-letter:nth-child(${char + 1})`
-      );
-
-      if (!attemptLetter)
-        throw new Error(
-          `Attempt ${attempt} char ${char} not found when trying to update to ${letter}`
-        );
-
-      if (letter) {
-        attemptLetter.innerHTML = letter;
-        attemptLetter.classList.add("pulse");
-      } else {
-        attemptLetter.innerHTML = "";
-        attemptLetter.classList.remove("pulse");
-      }
-
-      /**
-       * Handle horizontal scrolling
-       */
-      const attemptLength = GameState.attempts[attempt]?.length ?? 0;
-
-      const containerPaddingLeft =
-        parseFloat(getComputedStyle(Bindings.Word.Container).paddingLeft) || 0;
-      const containerPaddingRight =
-        parseFloat(getComputedStyle(Bindings.Word.Container).paddingRight) || 0;
-      const containerColumnGap =
-        parseFloat(getComputedStyle(Bindings.Word.Container).columnGap) || 0;
-      const letterWidth =
-        parseFloat(
-          getComputedStyle(document.querySelector(".attempt-letter")).width
-        ) || 0;
-      const windowWidth = window.innerWidth;
-
-      /**
-       * The cursor (or last non-empty square) must be at least
-       * one padding's length away from the left edge.
-       */
-      const maxScrollLeft =
-        (attemptLength - 1) * (letterWidth + containerColumnGap);
-
-      /**
-       * The cursor must be at most one padding's length away
-       * from the right edge.
-       */
-      const lengthToCursor =
-        containerPaddingLeft +
-        (attemptLength - 1) * (letterWidth + containerColumnGap);
-      const overflow = lengthToCursor - windowWidth;
-      const minScrollLeft = overflow + letterWidth + containerPaddingRight;
-
-      const currentScrollLeft = Bindings.Word.Container.scrollLeft;
-      Bindings.Word.Container.scrollLeft = Math.max(
-        Math.min(currentScrollLeft, maxScrollLeft),
-        minScrollLeft
-      );
-      Bindings.Word.Container.scrollIntoView();
-
-      save();
-    };
-
-    const updateAttempt = async (word, attempt, letters) => {
-      const attemptRow = Bindings.Word[`Attempt${attempt}`];
-      const attemptLetters = attemptRow.querySelectorAll(".attempt-letter");
-
-      for (let i = 0; i < attemptLetters.length; i++) {
-        const attemptLetter = attemptLetters[i];
-
-        const shrinkAnimation = attemptLetter.animate(
-          [
-            { transform: "perspective(12rem) rotate3d(0, 1, 0, 0deg)" },
-            { transform: "perspective(12rem) rotate3d(0, 1, 0, 90deg)" },
-          ],
-          { duration: 150, easing: "ease-out", fill: "forwards" }
-        );
-        await shrinkAnimation.finished;
-        attemptLetters[i].classList.add(
-          "submitted",
-          Constants.Colors[getWordLetterState(word, letters, i)]
-        );
-        const growAnimation = attemptLetter.animate(
-          [
-            { transform: "perspective(12rem) rotate3d(0, 1, 0, 270deg)" },
-            { transform: "perspective(12rem) rotate3d(0, 1, 0, 360deg)" },
-          ],
-          { duration: 200, easing: "ease-out", fill: "forwards" }
-        );
-        if (i === attemptLetters.length - 1) {
-          await growAnimation.finished;
-        }
-      }
-
-      if (GameState.attempts[attempt - 1] === word) {
-        for (let i = 0; i < attemptLetters.length; i++) {
-          const attemptLetter = attemptLetters[i];
-
-          const jumpAnimation = attemptLetter.animate(
-            [
-              { transform: "translateY(0)" },
-              { transform: "translateY(-1rem)" },
-            ],
-            { duration: 125, easing: "ease-out", fill: "forwards" }
-          );
-          await jumpAnimation.finished;
-          const fallAnimation = attemptLetter.animate(
-            [
-              { transform: "translateY(-1rem)" },
-              { transform: "translateY(0rem)" },
-            ],
-            { duration: 75, easing: "ease-out", fill: "forwards" }
-          );
-          if (i === attemptLetters.length - 1) {
-            await fallAnimation.finished;
-          }
-        }
-      }
-
       save();
     };
 
     const clearBinding = (binding, event = "pointerdown") => {
-      binding.Element.removeEventListener("pointerdown", binding.Listener);
+      binding.Element.removeEventListener(event, binding.Listener);
     };
 
     const updateBinding = (binding, callback, event = "pointerdown") => {
@@ -1014,179 +1063,62 @@
     };
 
     const updateButtonBindings = () => {
-      if (GameState.archived) {
-        Bindings.Control.MoreButton.Element.removeAttribute("disabled");
+      updateBinding(
+        Bindings.Document,
+        (e) => {
+          if (!e.metaKey && e.key === "r") reset();
 
-        clearBinding(Bindings.Document, "keydown");
+          if (!GameState.lost) {
+            Object.entries(Constants.KeyBindings).forEach(([move, keys]) =>
+              keys.includes(e.key) ? moveBoard(move) : {}
+            );
+          }
+        },
+        "keydown"
+      );
 
-        Bindings.Interactive.InputInput.Element.setAttribute("disabled", true);
-        clearBinding(Bindings.Interactive.InputKeyup, "keyup");
-        clearBinding(Bindings.Interactive.InputInput, "input");
+      updateBinding(
+        Bindings.Board.BoardTouchStart,
+        (e) => {
+          if (GameState.lost) return;
 
-        Bindings.Interactive.Enter.Element.setAttribute("disabled", true);
-        clearBinding(Bindings.Interactive.Enter);
+          SwipeState.active = true;
+          SwipeState.x = e.clientX;
+          SwipeState.y = e.clientY;
+        },
+        "pointerdown"
+      );
+      updateBinding(
+        Bindings.Board.BoardTouchEnd,
+        (e) => {
+          if (GameState.lost) return;
 
-        Bindings.Interactive.Delete.Element.setAttribute("disabled", true);
-        clearBinding(Bindings.Interactive.Delete);
+          if (SwipeState.active) {
+            SwipeState.active = false;
+            const deltaX = e.clientX - SwipeState.x;
+            const deltaY = e.clientY - SwipeState.y;
 
-        Bindings.Interactive.Letters.forEach((Binding) => {
-          Binding.Element.classList.remove("green");
-          Binding.Element.classList.remove("yellow");
-          Binding.Element.classList.remove("gray");
-
-          if (GameState.word.includes(Binding.Element.dataset.letter))
-            Binding.Element.classList.add("green");
-          Binding.Element.setAttribute("disabled", true);
-          clearBinding(Binding);
-        });
-      } else {
-        Bindings.Control.MoreButton.Element.setAttribute("disabled", true);
-        Bindings.Interactive.InputInput.Element.removeAttribute("disabled");
-        Bindings.Interactive.Enter.Element.removeAttribute("disabled");
-        Bindings.Interactive.Delete.Element.removeAttribute("disabled");
-
-        const onEnter = async () => {
-          const attempt = GameState.attempts[GameState.activeAttempt];
-
-          if (
-            attempt &&
-            attempt.length === GameState.length &&
-            GameDict.get(GameState.length)?.includes(attempt)
-          ) {
-            GameState.activeAttempt = GameState.activeAttempt + 1;
-
-            if (
-              GameState.activeAttempt >= Constants.Attempts ||
-              GameState.attempts.includes(GameState.word)
-            ) {
-              GameState.archived = true;
-              await updateAttempt(
-                GameState.word,
-                GameState.activeAttempt,
-                attempt
-              );
-              updateDisplayState();
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+              if (Math.abs(deltaX) > 16)
+                moveBoard(deltaX > 0 ? "right" : "left");
             } else {
-              updateAttempt(GameState.word, GameState.activeAttempt, attempt);
-              updateButtonBindings();
+              if (Math.abs(deltaY) > 16) moveBoard(deltaY > 0 ? "down" : "up");
             }
-          } else {
-            Bindings.Word[`Attempt${GameState.activeAttempt + 1}`].animate(
-              new Array(9).fill(0).map((_, index) => ({
-                transform: `translate(${~~(index / 2) % 2 === 0 ? "" : "-"}${
-                  index % 2 === 0 ? "0" : "0.25"
-                }rem)`,
-              })),
-              { duration: 360, easing: "linear", fill: "forwards" }
-            );
-
-            updateDisplayState();
           }
-        };
-        updateBinding(Bindings.Interactive.Enter, onEnter);
-
-        const onDelete = () => {
-          const attempt = GameState.attempts[GameState.activeAttempt];
-
-          if (attempt && attempt.length > 0) {
-            GameState.attempts[GameState.activeAttempt] = attempt.slice(
-              0,
-              attempt.length - 1
-            );
-
-            updateLetter(GameState.activeAttempt, attempt.length - 1);
-          }
-        };
-        updateBinding(Bindings.Interactive.Delete, onDelete);
-
-        const onLetter = (letter) => {
-          const attempt = GameState.attempts[GameState.activeAttempt];
-
-          if (!attempt || attempt.length < GameState.length) {
-            GameState.attempts[GameState.activeAttempt] =
-              (attempt ?? "") + letter;
-
-            updateLetter(GameState.activeAttempt, attempt?.length ?? 0, letter);
-          }
-        };
-        for (const Binding of Bindings.Interactive.Letters) {
-          Binding.Element.classList.remove("green");
-          Binding.Element.classList.remove("yellow");
-          Binding.Element.classList.remove("gray");
-          Binding.Element.removeAttribute("disabled");
-
-          const letterState = getLetterState(
-            GameState.word,
-            Binding.Element.dataset.letter,
-            GameState.attempts.slice(0, GameState.activeAttempt)
-          );
-          if (letterState) Binding.Element.classList.add(letterState);
-
-          updateBinding(Binding, () =>
-            onLetter(Binding.Element.dataset.letter)
-          );
-        }
-
-        updateBinding(
-          Bindings.Interactive.InputInput,
-          (e) => {
-            Bindings.Interactive.InputInput.Element.value =
-              Constants.KeyboardInputPrompt;
-
-            if (e.inputType === "deleteContentBackward") return onDelete();
-
-            for (const { Element } of Bindings.Interactive.Letters) {
-              if (
-                e.data?.toLowerCase() === Element.dataset.letter &&
-                !(e.altKey || e.ctrlKey || e.metaKey || e.shiftKey)
-              ) {
-                onLetter(Element.dataset.letter);
-              }
-            }
-          },
-          "input"
-        );
-
-        updateBinding(
-          Bindings.Interactive.InputKeyup,
-          (e) => {
-            if (e.key === "Enter") return onEnter();
-          },
-          "keyup"
-        );
-
-        updateBinding(
-          Bindings.Document,
-          (e) => {
-            if (Bindings.Interactive.InputInput.Element.contains(e.target))
-              return;
-
-            if (e.key === "Enter") onEnter();
-            if (e.key === "Backspace") onDelete();
-
-            for (const { Element } of Bindings.Interactive.Letters) {
-              if (
-                e.key.toLowerCase() === Element.dataset.letter &&
-                !(e.altKey || e.ctrlKey || e.metaKey || e.shiftKey)
-              ) {
-                onLetter(Element.dataset.letter);
-              }
-            }
-          },
-          "keydown"
-        );
-      }
+        },
+        "pointerup"
+      );
 
       Bindings.Dialogs.OverviewDialog.querySelectorAll(
-        "button[data-game-key]"
+        "button[data-theme-key]"
       ).forEach((button) =>
         button.addEventListener("click", () => {
           const key = button.dataset.gameKey;
 
           if (
-            AppState.currentGameKey === key &&
-            AppState.currentGameKey !== AppState.now &&
-            confirm(`Delete game ${key.replace("+", " • ")}?`)
+            AppState.currentThemeKey === key &&
+            AppState.currentThemeKey !== AppState.now &&
+            confirm(`Delete theme ${key.replace("+", " • ")}?`)
           ) {
             delete ThemeHistory[key];
             switchGame(AppState.now);
@@ -1236,6 +1168,13 @@
             Bindings.Dialogs.OverviewDialog.close();
             Bindings.Control.OverviewButton.Element.blur();
           }
+        },
+        "click"
+      );
+      updateBinding(
+        Bindings.Control.ResetButton,
+        () => {
+          reset();
         },
         "click"
       );
