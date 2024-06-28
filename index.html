@@ -30,6 +30,11 @@
         font-family: "Be Vietnam Pro", sans-serif;
         -webkit-tap-highlight-color: transparent;
       }
+      .brat *,
+      .brat *::before,
+      .brat *::after {
+        font-family: "Arial";
+      }
 
       :root {
         --black: #000000;
@@ -41,8 +46,8 @@
         --green: #3eb23e;
         --light-green: #a3fab3;
         --yellow: #d3b342;
-        --theme: #f2a5ff;
-        --theme-accent: #bb76c6;
+        --theme: #535353;
+        --brat: #89cc04;
 
         --columnsize: 4;
         --rowsize: 4;
@@ -86,6 +91,10 @@
         font-size: 1.375rem;
         font-weight: 900;
         line-height: 2rem;
+      }
+      .brat h1 {
+        transform: scaleY(1.35);
+        filter: blur(0.5px);
       }
       nav h1 {
         color: var(--black-on-theme);
@@ -186,6 +195,11 @@
       }
       .button span {
         padding: 0;
+        text-align: left;
+      }
+      .brat .button span {
+        transform: scaleY(1.15);
+        filter: blur(0.25px);
       }
 
       .checkbox {
@@ -226,7 +240,8 @@
         stroke: var(--black-on-theme);
       }
       .accent {
-        background-color: var(--theme-accent);
+        background-color: var(--theme);
+        filter: brightness(0.7);
         color: var(--black-on-theme);
         stroke: var(--black-on-theme);
       }
@@ -309,7 +324,7 @@
         height: 100%;
         width: 100%;
       }
-      :where(.lost > div:not(#lost)) {
+      :where(.reset > div:not(#reset)) {
         opacity: 0.1;
         transition: 205ms ease-out;
       }
@@ -323,16 +338,16 @@
         display: grid;
         grid-template-columns: repeat(var(--rowsize, 4), 1fr);
         grid-template-rows: repeat(var(--columnsize, 4), 1fr);
-        gap: min(2vw, 1rem);
+        gap: min(4vw, 1rem);
 
-        padding: 1rem;
+        padding: min(4vw, 1rem);
       }
       .board.invisible {
         opacity: 0;
       }
       #board {
         background-color: var(--lightest-gray);
-        border-radius: 0.5rem;
+        border-radius: 0.25rem;
       }
       #anim {
         pointer-events: none;
@@ -340,13 +355,13 @@
       #state {
         pointer-events: none;
       }
-      #lost {
+      #reset {
         display: flex;
         flex-flow: column nowrap;
         align-items: center;
         pointer-events: none;
       }
-      .lost #lost {
+      .reset #reset {
         pointer-events: auto;
       }
       .board-square,
@@ -354,50 +369,45 @@
         width: 100%;
         height: 100%;
         aspect-ratio: 1 / 1;
-        border-radius: 0.25rem;
+        border-radius: 0.125rem;
       }
       .board-square {
         background-color: var(--light-gray);
       }
+
       .board-piece {
         display: grid;
         place-content: center;
+        overflow: hidden;
 
-        font-size: min(6vw, 2rem);
+        font-size: min(6vw, 2.5rem);
         font-weight: bold;
-        background-color: var(--theme-accent);
       }
       .board-piece.invisible {
         visibility: hidden;
       }
+      .board-piece.unstyled {
+        background-color: var(--theme);
+        color: var(--black-on-theme);
+      }
+      .board-piece.plain {
+        background-color: var(--background);
+        color: var(--color);
+      }
+      .board-piece.brat {
+        background-color: var(--brat);
+        color: black;
+      }
+      .board-piece.brat span {
+        transform: scaleY(1.35) scale(0.85);
+        filter: blur(0.75px);
+        text-align: justify;
+      }
 
-      #overview-daily-games,
-      #overview-random-games-container,
-      #overview-random-games {
+      #overview-themes {
         display: flex;
         flex-flow: column nowrap;
         gap: 0.5rem;
-      }
-
-      @keyframes fade-in {
-        from {
-          opacity: 0;
-          transform: translateX(-50%) translateY(-1rem);
-        }
-      }
-
-      @keyframes pulse {
-        0% {
-          transform: scale(1);
-        }
-
-        50% {
-          transform: scale(1.2);
-        }
-
-        100% {
-          transform: scale(1);
-        }
       }
     </style>
   </head>
@@ -423,23 +433,7 @@
           </button>
         </div>
         <h1>2048</h1>
-        <div class="nav-buttons right">
-          <button id="more-button" class="accent button">
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 15 15"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M2.34375 1.875V8.90625C2.34375 9.27921 2.49191 9.6369 2.75563 9.90062C3.01935 10.1643 3.37704 10.3125 3.75 10.3125H5.15625M2.34375 1.875H1.40625M2.34375 1.875H12.6562M5.15625 10.3125H9.84375M5.15625 10.3125L4.53125 12.1875M12.6562 1.875H13.5938M12.6562 1.875V8.90625C12.6562 9.27921 12.5081 9.6369 12.2444 9.90062C11.9806 10.1643 11.623 10.3125 11.25 10.3125H9.84375M9.84375 10.3125L10.4688 12.1875M4.53125 12.1875H10.4688M4.53125 12.1875L4.21875 13.125M10.4688 12.1875L10.7812 13.125M4.6875 7.5L6.5625 5.625L7.905 6.9675C8.53575 6.06206 9.3576 5.30614 10.3125 4.75313"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-          </button>
-        </div>
+        <div class="nav-buttons right"></div>
       </nav>
       <section id="game">
         <div id="board-container">
@@ -463,9 +457,11 @@
           </div>
           <div id="anim" class="board"></div>
           <div id="state" class="board"></div>
-          <div id="lost" class="board invisible">
-            <span>No valid moves left!</span>
-            <button id="lost-reset" class="theme button">Start new game</button>
+          <div id="reset" class="board invisible">
+            <span id="reset-text"></span>
+            <button id="reset-button" class="theme button">
+              Start new game
+            </button>
           </div>
         </div>
       </section>
@@ -497,61 +493,74 @@
             <svg
               width="22"
               height="22"
-              viewBox="0 0 22 22"
+              viewBox="0 0 24 24"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
-                d="M6.1875 2.75V4.8125M15.8125 2.75V4.8125M2.75 17.1875V6.875C2.75 6.32799 2.9673 5.80339 3.35409 5.41659C3.74089 5.0298 4.26549 4.8125 4.8125 4.8125H17.1875C17.7345 4.8125 18.2591 5.0298 18.6459 5.41659C19.0327 5.80339 19.25 6.32799 19.25 6.875V17.1875M2.75 17.1875C2.75 17.7345 2.9673 18.2591 3.35409 18.6459C3.74089 19.0327 4.26549 19.25 4.8125 19.25H17.1875C17.7345 19.25 18.2591 19.0327 18.6459 18.6459C19.0327 18.2591 19.25 17.7345 19.25 17.1875M2.75 17.1875V10.3125C2.75 9.76549 2.9673 9.24089 3.35409 8.85409C3.74089 8.4673 4.26549 8.25 4.8125 8.25H17.1875C17.7345 8.25 18.2591 8.4673 18.6459 8.85409C19.0327 9.24089 19.25 9.76549 19.25 10.3125V17.1875M11 11.6875H11.0073V11.6948H11V11.6875ZM11 13.75H11.0073V13.7573H11V13.75ZM11 15.8125H11.0073V15.8198H11V15.8125ZM8.9375 13.75H8.94483V13.7573H8.9375V13.75ZM8.9375 15.8125H8.94483V15.8198H8.9375V15.8125ZM6.875 13.75H6.88233V13.7573H6.875V13.75ZM6.875 15.8125H6.88233V15.8198H6.875V15.8125ZM13.0625 11.6875H13.0698V11.6948H13.0625V11.6875ZM13.0625 13.75H13.0698V13.7573H13.0625V13.75ZM13.0625 15.8125H13.0698V15.8198H13.0625V15.8125ZM15.125 11.6875H15.1323V11.6948H15.125V11.6875ZM15.125 13.75H15.1323V13.7573H15.125V13.75Z"
+                d="M4.098 19.902a3.75 3.75 0 0 0 5.304 0l6.401-6.402M6.75 21A3.75 3.75 0 0 1 3 17.25V4.125C3 3.504 3.504 3 4.125 3h5.25c.621 0 1.125.504 1.125 1.125v4.072M6.75 21a3.75 3.75 0 0 0 3.75-3.75V8.197M6.75 21h13.125c.621 0 1.125-.504 1.125-1.125v-5.25c0-.621-.504-1.125-1.125-1.125h-4.072M10.5 8.197l2.88-2.88c.438-.439 1.15-.439 1.59 0l3.712 3.713c.44.44.44 1.152 0 1.59l-2.879 2.88M6.75 17.25h.008v.008H6.75v-.008Z"
                 stroke-width="1.5"
                 stroke-linecap="round"
                 stroke-linejoin="round"
               />
             </svg>
-            <strong>Daily games</strong>
+            <strong>Themes</strong>
           </div>
-          <div id="overview-daily-games"></div>
+          <div id="overview-themes"></div>
+          <button id="overview-new-theme" class="small light-gray button">
+            <span>New theme</span>
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 15 15"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M7.5 2.8125V12.1875M12.1875 7.5H2.8125"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+          <button id="overview-clear-data" class="small light-gray button">
+            <span>Clear data</span>
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
         </div>
         <div class="pane">
           <div class="icon-group">
             <svg
               width="23"
               height="22"
-              viewBox="0 0 23 22"
+              viewBox="0 0 24 24"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
-                d="M18.375 11C18.375 9.87067 18.3328 8.75142 18.2485 7.64317C18.1836 6.76514 17.8055 5.93963 17.1829 5.31708C16.5604 4.69453 15.7349 4.31637 14.8568 4.25151C12.6221 4.08291 10.3779 4.08291 8.14317 4.25151C7.26513 4.31637 6.43963 4.69453 5.81707 5.31708C5.19452 5.93963 4.81636 6.76514 4.7515 7.64317C4.73592 7.84484 4.72217 8.04742 4.70933 8.25001M18.375 11L21.125 8.25001M18.375 11L15.625 8.25001M4.625 11C4.625 12.1293 4.66717 13.2486 4.7515 14.3568C4.81636 15.2349 5.19452 16.0604 5.81707 16.6829C6.43963 17.3055 7.26513 17.6836 8.14317 17.7485C10.3779 17.9172 12.6221 17.9172 14.8568 17.7485C15.7349 17.6836 16.5604 17.3055 17.1829 16.6829C17.8055 16.0604 18.1836 15.2349 18.2485 14.3568C18.2641 14.1552 18.2778 13.9526 18.2907 13.75M4.625 11L7.375 13.75M4.625 11L1.875 13.75"
+                d="M9.53 16.122a3 3 0 0 0-5.78 1.128 2.25 2.25 0 0 1-2.4 2.245 4.5 4.5 0 0 0 8.4-2.245c0-.399-.078-.78-.22-1.128Zm0 0a15.998 15.998 0 0 0 3.388-1.62m-5.043-.025a15.994 15.994 0 0 1 1.622-3.395m3.42 3.42a15.995 15.995 0 0 0 4.764-4.648l3.876-5.814a1.151 1.151 0 0 0-1.597-1.597L14.146 6.32a15.996 15.996 0 0 0-4.649 4.763m3.42 3.42a6.776 6.776 0 0 0-3.42-3.42"
                 stroke-width="1.5"
                 stroke-linecap="round"
                 stroke-linejoin="round"
               />
             </svg>
-            <strong>Random games</strong>
+            <strong>Theme editor</strong>
           </div>
-          <span>Want more than one game a day? Try a random game!</span>
-          <div id="overview-random-games-container">
-            <button
-              id="overview-new-random-game"
-              class="small light-gray button"
-            >
-              <span>New random game</span>
-              <svg
-                width="15"
-                height="15"
-                viewBox="0 0 15 15"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M7.5 2.8125V12.1875M12.1875 7.5H2.8125"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </svg>
-            </button>
-            <div id="overview-random-games"></div>
+          <div id="theme-editor">
+            <span>Coming soon!</span>
+            <form id="theme-editor-form"></form>
           </div>
         </div>
       </div>
@@ -559,17 +568,219 @@
   </body>
   <script id="variables">
     const Constants = {
-      Api: {
-        Dict: "/dict.txt",
-      },
-      WordLength: 5,
-      Attempts: 6,
-      KeyboardInputPrompt: "Click here to use your keyboard.",
-      Colors: ["green", "yellow", "gray"],
-      BotTopChoices: 10,
       RowSize: 4,
       ColumnSize: 4,
+      PiecePaddingPercent: 0.04,
       HigherTierProbability: 0.1,
+      MaxLevels: 11,
+      DefaultTheme: "Default",
+      DefaultThemes: {
+        Default: {
+          theme: "#f2a5ff",
+          map: {
+            [1]: {
+              type: "text",
+              format: "plain",
+              background: "#f2a5ff",
+              color: "#000000",
+              value: "2",
+            },
+            [2]: {
+              type: "text",
+              format: "plain",
+              background: "#f2a5ff",
+              color: "#000000",
+              value: "4",
+            },
+            [3]: {
+              type: "text",
+              format: "plain",
+              background: "#f2a5ff",
+              color: "#000000",
+              value: "8",
+            },
+            [4]: {
+              type: "text",
+              format: "plain",
+              background: "#f2a5ff",
+              color: "#000000",
+              value: "16",
+            },
+            [5]: {
+              type: "text",
+              format: "plain",
+              background: "#f2a5ff",
+              color: "#000000",
+              value: "32",
+            },
+            [6]: {
+              type: "text",
+              format: "plain",
+              background: "#f2a5ff",
+              color: "#000000",
+              value: "64",
+            },
+            [7]: {
+              type: "text",
+              format: "plain",
+              background: "#f2a5ff",
+              color: "#000000",
+              value: "128",
+            },
+            [8]: {
+              type: "text",
+              format: "plain",
+              background: "#f2a5ff",
+              color: "#000000",
+              value: "256",
+            },
+            [9]: {
+              type: "text",
+              format: "plain",
+              background: "#f2a5ff",
+              color: "#000000",
+              value: "512",
+            },
+            [10]: {
+              type: "text",
+              format: "plain",
+              background: "#f2a5ff",
+              color: "#000000",
+              value: "1024",
+            },
+            [11]: {
+              type: "text",
+              format: "plain",
+              background: "#f2a5ff",
+              color: "#000000",
+              value: "2048",
+            },
+          },
+        },
+        BRAT: {
+          theme: "#89cc04",
+          map: {
+            [1]: {
+              type: "text",
+              format: "brat",
+              value: "2",
+            },
+            [2]: {
+              type: "text",
+              format: "brat",
+              value: "4",
+            },
+            [3]: {
+              type: "text",
+              format: "brat",
+              value: "8",
+            },
+            [4]: {
+              type: "text",
+              format: "brat",
+              value: "16",
+            },
+            [5]: {
+              type: "text",
+              format: "brat",
+              value: "32",
+            },
+            [6]: {
+              type: "text",
+              format: "brat",
+              value: "64",
+            },
+            [7]: {
+              type: "text",
+              format: "brat",
+              value: "128",
+            },
+            [8]: {
+              type: "text",
+              format: "brat",
+              value: "256",
+            },
+            [9]: {
+              type: "text",
+              format: "brat",
+              value: "512",
+            },
+            [10]: {
+              type: "text",
+              format: "brat",
+              value: "1024",
+            },
+            [11]: {
+              type: "text",
+              format: "brat",
+              value: "2048",
+            },
+          },
+        },
+        ["Brat and it's the same but there's three more songs so it's not"]: {
+          theme: "#ffffff",
+          map: {
+            [1]: {
+              type: "text",
+              format: "brat",
+              value: "I think about\nit all the time",
+            },
+            [2]: {
+              type: "text",
+              format: "brat",
+              value: "Von dutch",
+            },
+            [3]: {
+              type: "text",
+              format: "brat",
+              value: "360",
+            },
+            [4]: {
+              type: "text",
+              format: "brat",
+              value: "Mean girls",
+            },
+            [5]: {
+              type: "text",
+              format: "brat",
+              value: "365",
+            },
+            [6]: {
+              type: "text",
+              format: "brat",
+              value: "Club classics",
+            },
+            [7]: {
+              type: "text",
+              format: "brat",
+              value: "Girl, so confusing",
+            },
+            [8]: {
+              type: "text",
+              format: "brat",
+              value: "b2b",
+            },
+            [9]: {
+              type: "text",
+              format: "brat",
+              value: "So I",
+            },
+            [10]: {
+              type: "text",
+              format: "brat",
+              value: "Spring breakers",
+            },
+            [11]: {
+              type: "text",
+              format: "brat",
+              value: "Guess",
+            },
+          },
+        },
+        Cupcake: {
+          theme: "#f67098",
+        },
+      },
       KeyBindings: {
         up: ["ArrowUp", "w"],
         down: ["ArrowDown", "s"],
@@ -609,26 +820,33 @@
           Element: document.getElementById("overview-close-button"),
           Listener: undefined,
         },
-        OverviewNewRandomGame: {
-          Element: document.getElementById("overview-new-random-game"),
+        OverviewNewThemeButton: {
+          Element: document.getElementById("overview-new-theme"),
+          Listener: undefined,
+        },
+        OverviewClearDataButton: {
+          Element: document.getElementById("overview-clear-data"),
           Listener: undefined,
         },
         ResetButton: {
-          Element: document.getElementById("lost-reset"),
+          Element: document.getElementById("reset-button"),
           Listener: undefined,
         },
       },
       Dialogs: {
         OverviewDialog: document.getElementById("overview-dialog"),
-        OverviewDailyGames: document.getElementById("overview-daily-games"),
-        OverviewRandomGames: document.getElementById("overview-random-games"),
+        OverviewThemes: document.getElementById("overview-themes"),
+        OverviewThemeEditor: document.getElementById(
+          "overview-theme-editor-form"
+        ),
       },
       Board: {
         Container: document.getElementById("board-container"),
         Board: document.getElementById("board"),
         Animation: document.getElementById("anim"),
         State: document.getElementById("state"),
-        Lost: document.getElementById("lost"),
+        Reset: document.getElementById("reset"),
+        ResetText: document.getElementById("reset-text"),
         BoardTouchStart: {
           Element: document.getElementById("board"),
           Listener: undefined,
@@ -773,6 +991,14 @@
     const addNewPieces = (board, pieces = 1) => {
       const emptySquares = board.filter((square) => square === 0).length;
       const targetEmptySquares = new Set();
+
+      if (emptySquares === 0) {
+        return {
+          board,
+          targetSquares: new Set(),
+        };
+      }
+
       while (targetEmptySquares.size < pieces) {
         targetEmptySquares.add(Math.floor(Math.random() * emptySquares));
       }
@@ -813,12 +1039,16 @@
 
       GameState.premove = calculateBoard(GameState.board);
 
+      if (GameState.board.some((square) => square >= Constants.MaxLevels)) {
+        GameState.status = "won";
+      }
+
       if (
         Object.values(GameState.premove).every(({ diff }) =>
           diff.every((diff) => diff === 0)
         )
       ) {
-        GameState.lost = true;
+        GameState.status = "lost";
       }
 
       await animateState(
@@ -836,9 +1066,21 @@
     const switchTheme = async (themeKey) => {
       if (!(themeKey in ThemeHistory))
         throw new Error("Attempted to switch to nonexistent theme!");
+
       AppState.currentThemeKey = themeKey;
       ThemeState = ThemeHistory[AppState.currentThemeKey];
+
       updateDisplayState();
+    };
+
+    const newTheme = async () => {
+      const uuid = crypto.randomUUID().slice(0, 6);
+
+      ThemeHistory[uuid] = {
+        theme: "#f2a5ff",
+      };
+
+      await switchTheme(uuid);
     };
 
     const reset = async () => {
@@ -863,13 +1105,6 @@
     };
 
     const load = async () => {
-      const localThemeHistoryString =
-        window.localStorage.getItem("2048_History");
-
-      if (localThemeHistoryString) {
-        ThemeHistory = JSON.parse(localThemeHistoryString);
-      }
-
       const emptyBoard = () =>
         new Array(Constants.RowSize * Constants.ColumnSize).fill(0);
 
@@ -900,18 +1135,89 @@
         emptyBoard()
       );
 
-      updateDisplayState();
+      const localThemeHistoryString =
+        window.localStorage.getItem("2048_History");
+
+      if (localThemeHistoryString) {
+        ThemeHistory = JSON.parse(localThemeHistoryString);
+      }
+
+      for (const [key, theme] of Object.entries(Constants.DefaultThemes)) {
+        ThemeHistory[key] = theme;
+      }
+
+      const lastThemeHistoryString = window.localStorage.getItem("2048_Theme");
+
+      await switchTheme(lastThemeHistoryString ?? Constants.DefaultTheme);
     };
 
-    const save = async () => {
+    const save = () => {
+      window.localStorage.setItem("2048_Theme", AppState.currentThemeKey);
       window.localStorage.setItem("2048_State", JSON.stringify(GameState));
       window.localStorage.setItem("2048_History", JSON.stringify(ThemeHistory));
     };
 
-    const getThemedPiece = (state, customClasses = "") =>
-      `<div data-state="${state}" class="board-piece ${
-        state === 0 ? "invisible" : ""
-      } ${customClasses}">${Math.pow(2, state)}</div>`;
+    const del = () => {
+      window.localStorage.removeItem("2048_Theme", AppState.currentThemeKey);
+      window.localStorage.removeItem("2048_State", JSON.stringify(GameState));
+      window.localStorage.removeItem(
+        "2048_History",
+        JSON.stringify(ThemeHistory)
+      );
+    };
+
+    const getThemedPiece = (state) => {
+      if (state === 0) {
+        return `<div class="board-piece invisible"><span>${Math.pow(
+          2,
+          state
+        )}</span></div>`;
+      }
+
+      if (!ThemeState.map || !ThemeState.map[state]) {
+        return `<div class="board-piece unstyled"><span>${Math.pow(
+          2,
+          state
+        )}</span></div>`;
+      }
+
+      const themedPiece = ThemeState.map[state];
+
+      if (themedPiece.type === "text") {
+        if (themedPiece.format === "plain") {
+          return `<div class="board-piece plain" style="--background: ${themedPiece.background}; --color: ${themedPiece.color}"><span>${themedPiece.value}</span></div>`;
+        }
+
+        if (themedPiece.format === "brat") {
+          return `<div class="board-piece brat"><span>${themedPiece.value}</span></div>`;
+        }
+      }
+    };
+
+    const populateNodeWithBoard = (node, board) => {
+      node.innerHTML = board
+        .map((state, index) => getThemedPiece(state))
+        .join("");
+
+      node.querySelectorAll(".board-piece").forEach((piece) => {
+        const span = piece.querySelector("span");
+
+        const pieceWidth = piece.getBoundingClientRect().width;
+        const pieceHeight = piece.getBoundingClientRect().height;
+        const spanWidth = span.getBoundingClientRect().width;
+        const spanHeight = span.getBoundingClientRect().height;
+
+        const widthOverflow = spanWidth / pieceWidth;
+        const heightOverflow = spanHeight / pieceHeight;
+        const largestOverflow = Math.max(widthOverflow, heightOverflow);
+
+        if (largestOverflow > 1 - 2 * Constants.PiecePaddingPercent) {
+          const scaleFactor =
+            (1 - 2 * Constants.PiecePaddingPercent) / largestOverflow;
+          span.style.scale = scaleFactor;
+        }
+      });
+    };
 
     const animateState = async (
       previousBoard,
@@ -921,14 +1227,7 @@
       combined,
       move = "left"
     ) => {
-      if (GameState.lost) return;
-
-      Bindings.Board.Animation.innerHTML = previousBoard
-        .map((state, index) =>
-          /** @todo theme */
-          getThemedPiece(state)
-        )
-        .join("");
+      populateNodeWithBoard(Bindings.Board.Animation, previousBoard);
 
       const moveAnimationPieces = Array.from(
         document.querySelectorAll("#anim .board-piece")
@@ -958,12 +1257,7 @@
 
       await Promise.all(moveAnimationPromises);
 
-      Bindings.Board.Animation.innerHTML = newBoard
-        .map((state, index) =>
-          /** @todo theme */
-          getThemedPiece(state)
-        )
-        .join("");
+      populateNodeWithBoard(Bindings.Board.Animation, newBoard);
 
       const growAnimationPieces = Array.from(
         document.querySelectorAll("#anim .board-piece")
@@ -986,67 +1280,52 @@
     };
 
     const updateDisplayState = () => {
-      if (GameState.lost) {
-        Bindings.Board.Container.classList.add("lost");
-        Bindings.Board.Lost.classList.remove("invisible");
+      document.documentElement.style.setProperty("--theme", ThemeState.theme);
+
+      if (
+        ThemeState.map &&
+        Object.values(ThemeState.map).some(
+          (themedPiece) =>
+            themedPiece.type === "text" && themedPiece.format === "brat"
+        )
+      ) {
+        document.body.classList.add("brat");
       } else {
-        Bindings.Board.Container.classList.remove("lost");
-        Bindings.Board.Lost.classList.add("invisible");
+        document.body.classList.remove("brat");
+      }
+
+      if (GameState.status) {
+        Bindings.Board.ResetText.innerHTML =
+          GameState.status === "won"
+            ? "You won! Well played."
+            : "No more valid moves!";
+        Bindings.Board.Container.classList.add("reset");
+        Bindings.Board.Reset.classList.remove("invisible");
+      } else {
+        Bindings.Board.ResetText.innerHTML = "";
+        Bindings.Board.Container.classList.remove("reset");
+        Bindings.Board.Reset.classList.add("invisible");
       }
 
       Bindings.Board.State.classList.remove("invisible");
       Bindings.Board.Animation.classList.add("invisible");
 
-      Bindings.Board.State.innerHTML = GameState.board
-        .map((state) =>
-          /** @todo theme */
-          getThemedPiece(state)
-        )
-        .join("");
+      populateNodeWithBoard(Bindings.Board.State, GameState.board);
 
-      Bindings.Dialogs.OverviewDailyGames.innerHTML = Object.entries(
-        ThemeHistory
-      )
+      Bindings.Dialogs.OverviewThemes.innerHTML = Object.entries(ThemeHistory)
         .sort()
         .reverse()
         .reduce(
           (innerHTML, [key, theme]) =>
-            key === AppState.now || key.includes("+")
-              ? innerHTML
-              : (innerHTML += `<button data-theme-key=${key} class="small ${
-                  AppState.currentThemeKey === key ? "theme" : "light-gray"
-                } button">
-                    <span>
-                      <strong>
-                        ${key.slice(5, 7)}/${key.slice(8, 10)}
-                      </strong>
-                    </span>
-                  </button>`),
-          `<button data-theme-key=${AppState.now} class="small ${
-            AppState.currentThemeKey === AppState.now ? "theme" : "light-gray"
-          } button">
-            <span>
-              <strong>Today</strong>
-            </span>
-          </button>`
-        );
-      Bindings.Dialogs.OverviewRandomGames.innerHTML = Object.entries(
-        ThemeHistory
-      )
-        .sort()
-        .reduce(
-          (innerHTML, [key, theme]) =>
-            !key.includes("+")
-              ? innerHTML
-              : (innerHTML += `<button data-theme-key=${key} class="small ${
-                  key === AppState.currentThemeKey ? "theme" : "light-gray"
-                } button">
-                  <span>
-                    <strong>
-                      ${key.replace("+", " • ")}
-                    </strong>
-                  </span>
-                </button>`),
+            (innerHTML += `<button data-theme-key="${key}" class="small ${
+              AppState.currentThemeKey === key ? "theme" : "light-gray"
+            } button">
+                <span>
+                  <strong>
+                    ${key}
+                  </strong>
+                </span>
+              </button>`),
           ""
         );
 
@@ -1071,7 +1350,7 @@
         (e) => {
           if (!e.metaKey && e.key === "r") reset();
 
-          if (!GameState.lost) {
+          if (!GameState.status) {
             Object.entries(Constants.KeyBindings).forEach(([move, keys]) =>
               keys.includes(e.key) ? moveBoard(move) : {}
             );
@@ -1083,7 +1362,7 @@
       updateBinding(
         Bindings.Board.BoardTouchStart,
         (e) => {
-          if (GameState.lost) return;
+          if (GameState.status) return;
 
           SwipeState.active = true;
           SwipeState.x = e.clientX;
@@ -1094,7 +1373,7 @@
       updateBinding(
         Bindings.Board.BoardTouchEnd,
         (e) => {
-          if (GameState.lost) return;
+          if (GameState.status) return;
 
           if (SwipeState.active) {
             SwipeState.active = false;
@@ -1116,7 +1395,7 @@
         "button[data-theme-key]"
       ).forEach((button) =>
         button.addEventListener("click", () => {
-          const key = button.dataset.gameKey;
+          const key = button.dataset.themeKey;
 
           if (
             AppState.currentThemeKey === key &&
@@ -1124,11 +1403,9 @@
             confirm(`Delete theme ${key.replace("+", " • ")}?`)
           ) {
             delete ThemeHistory[key];
-            switchGame(AppState.now);
+            switchTheme(Constants.DefaultTheme);
           } else {
-            switchGame(key);
-            Bindings.Dialogs.OverviewDialog.close();
-            Bindings.Control.OverviewButton.Element.blur();
+            switchTheme(key);
           }
         })
       );
@@ -1151,26 +1428,16 @@
         "click"
       );
       updateBinding(
-        Bindings.Control.OverviewNewRandomGame,
+        Bindings.Control.OverviewNewThemeButton,
         async () => {
-          const lengthString = prompt(
-            "How long should the word be? Choose any number greater than 4.",
-            "5"
-          );
-
-          if (
-            !lengthString ||
-            Number.isNaN(parseInt(lengthString)) ||
-            parseInt(lengthString) < 4
-          ) {
-            alert("That isn't a valid length!");
-          } else {
-            const length = parseInt(lengthString);
-
-            await loadRandom(length);
-            Bindings.Dialogs.OverviewDialog.close();
-            Bindings.Control.OverviewButton.Element.blur();
-          }
+          newTheme();
+        },
+        "click"
+      );
+      updateBinding(
+        Bindings.Control.OverviewClearDataButton,
+        async () => {
+          del();
         },
         "click"
       );
@@ -1188,12 +1455,6 @@
       await load();
 
       updateControlButtonsOnce();
-
-      Object.entries(ThemeHistory).forEach(([key, game]) => {
-        if (key !== AppState.now && !key.includes("+")) {
-          archiveGame(key);
-        }
-      });
 
       if ("serviceWorker" in navigator) {
         await navigator.serviceWorker.register("./sw.js", {
