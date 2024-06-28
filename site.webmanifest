@@ -16,6 +16,6 @@
   "theme_color": "#F2A5FF",
   "background_color": "#FFFFFF",
   "display": "standalone",
-  "description": "A words game",
+  "description": "A numbers game",
   "start_url": "/"
 }
