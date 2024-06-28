@@ -309,7 +309,7 @@
         height: 100%;
         width: 100%;
       }
-      #board-container.lost .board:not(#lost) {
+      :where(.lost > div:not(#lost)) {
         opacity: 0.1;
         transition: 205ms ease-out;
       }
@@ -327,9 +327,8 @@
 
         padding: 1rem;
       }
-      #board-container .board.invisible {
+      .board.invisible {
         opacity: 0;
-        pointer-events: none;
       }
       #board {
         background-color: var(--lightest-gray);
@@ -340,6 +339,15 @@
       }
       #state {
         pointer-events: none;
+      }
+      #lost {
+        display: flex;
+        flex-flow: column nowrap;
+        align-items: center;
+        pointer-events: none;
+      }
+      .lost #lost {
+        pointer-events: auto;
       }
       .board-square,
       .board-piece {
@@ -361,11 +369,6 @@
       }
       .board-piece.invisible {
         visibility: hidden;
-      }
-      #lost {
-        display: flex;
-        flex-flow: column nowrap;
-        align-items: center;
       }
 
       #overview-daily-games,
