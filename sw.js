@@ -7,7 +7,7 @@ self.addEventListener("install", (event) => {
     (async () => {
       const cache = await caches.open(CACHE_NAME);
 
-      await cache.addAll(["/", "/site.webmanifest"]);
+      await cache.addAll(["/", "/default.json", "/site.webmanifest"]);
     })()
   );
 });

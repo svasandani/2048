@@ -395,6 +395,7 @@
         color: var(--color);
       }
       .board-piece.brat {
+        font-weight: normal;
         background-color: var(--brat);
         color: black;
       }
@@ -402,6 +403,9 @@
         transform: scaleY(1.35) scale(0.85);
         filter: blur(0.75px);
         text-align: justify;
+      }
+      .board-piece.image img {
+        width: 100%;
       }
 
       #overview-themes {
@@ -568,219 +572,15 @@
   </body>
   <script id="variables">
     const Constants = {
+      Api: {
+        DefaultThemes: "./default.json",
+      },
       RowSize: 4,
       ColumnSize: 4,
       PiecePaddingPercent: 0.04,
       HigherTierProbability: 0.1,
       MaxLevels: 11,
       DefaultTheme: "Default",
-      DefaultThemes: {
-        Default: {
-          theme: "#f2a5ff",
-          map: {
-            [1]: {
-              type: "text",
-              format: "plain",
-              background: "#f2a5ff",
-              color: "#000000",
-              value: "2",
-            },
-            [2]: {
-              type: "text",
-              format: "plain",
-              background: "#f2a5ff",
-              color: "#000000",
-              value: "4",
-            },
-            [3]: {
-              type: "text",
-              format: "plain",
-              background: "#f2a5ff",
-              color: "#000000",
-              value: "8",
-            },
-            [4]: {
-              type: "text",
-              format: "plain",
-              background: "#f2a5ff",
-              color: "#000000",
-              value: "16",
-            },
-            [5]: {
-              type: "text",
-              format: "plain",
-              background: "#f2a5ff",
-              color: "#000000",
-              value: "32",
-            },
-            [6]: {
-              type: "text",
-              format: "plain",
-              background: "#f2a5ff",
-              color: "#000000",
-              value: "64",
-            },
-            [7]: {
-              type: "text",
-              format: "plain",
-              background: "#f2a5ff",
-              color: "#000000",
-              value: "128",
-            },
-            [8]: {
-              type: "text",
-              format: "plain",
-              background: "#f2a5ff",
-              color: "#000000",
-              value: "256",
-            },
-            [9]: {
-              type: "text",
-              format: "plain",
-              background: "#f2a5ff",
-              color: "#000000",
-              value: "512",
-            },
-            [10]: {
-              type: "text",
-              format: "plain",
-              background: "#f2a5ff",
-              color: "#000000",
-              value: "1024",
-            },
-            [11]: {
-              type: "text",
-              format: "plain",
-              background: "#f2a5ff",
-              color: "#000000",
-              value: "2048",
-            },
-          },
-        },
-        BRAT: {
-          theme: "#89cc04",
-          map: {
-            [1]: {
-              type: "text",
-              format: "brat",
-              value: "2",
-            },
-            [2]: {
-              type: "text",
-              format: "brat",
-              value: "4",
-            },
-            [3]: {
-              type: "text",
-              format: "brat",
-              value: "8",
-            },
-            [4]: {
-              type: "text",
-              format: "brat",
-              value: "16",
-            },
-            [5]: {
-              type: "text",
-              format: "brat",
-              value: "32",
-            },
-            [6]: {
-              type: "text",
-              format: "brat",
-              value: "64",
-            },
-            [7]: {
-              type: "text",
-              format: "brat",
-              value: "128",
-            },
-            [8]: {
-              type: "text",
-              format: "brat",
-              value: "256",
-            },
-            [9]: {
-              type: "text",
-              format: "brat",
-              value: "512",
-            },
-            [10]: {
-              type: "text",
-              format: "brat",
-              value: "1024",
-            },
-            [11]: {
-              type: "text",
-              format: "brat",
-              value: "2048",
-            },
-          },
-        },
-        ["Brat and it's the same but there's three more songs so it's not"]: {
-          theme: "#ffffff",
-          map: {
-            [1]: {
-              type: "text",
-              format: "brat",
-              value: "I think about\nit all the time",
-            },
-            [2]: {
-              type: "text",
-              format: "brat",
-              value: "Von dutch",
-            },
-            [3]: {
-              type: "text",
-              format: "brat",
-              value: "360",
-            },
-            [4]: {
-              type: "text",
-              format: "brat",
-              value: "Mean girls",
-            },
-            [5]: {
-              type: "text",
-              format: "brat",
-              value: "365",
-            },
-            [6]: {
-              type: "text",
-              format: "brat",
-              value: "Club classics",
-            },
-            [7]: {
-              type: "text",
-              format: "brat",
-              value: "Girl, so confusing",
-            },
-            [8]: {
-              type: "text",
-              format: "brat",
-              value: "b2b",
-            },
-            [9]: {
-              type: "text",
-              format: "brat",
-              value: "So I",
-            },
-            [10]: {
-              type: "text",
-              format: "brat",
-              value: "Spring breakers",
-            },
-            [11]: {
-              type: "text",
-              format: "brat",
-              value: "Guess",
-            },
-          },
-        },
-        Cupcake: {
-          theme: "#f67098",
-        },
-      },
       KeyBindings: {
         up: ["ArrowUp", "w"],
         down: ["ArrowDown", "s"],
@@ -1108,7 +908,125 @@
       updateDisplayState();
     };
 
+    const loadIdb = () => {
+      const onupgradeneeded = (e) => {
+        let database = e.target.result;
+        let oldVersion = e.oldVersion;
+
+        if (e.oldVersion < 1) {
+          database.createObjectStore(this._config.storeName);
+        }
+      };
+
+      class DB {
+        constructor(dbName = "testDb", storeName = "testStore", version = 1) {
+          this._config = {
+            dbName,
+            storeName,
+            version,
+          };
+        }
+
+        read(key) {
+          return new Promise((resolve, reject) => {
+            let dbRequest = window.indexedDB.open(
+              this._config.dbName,
+              this._config.version
+            );
+
+            dbRequest.onerror = (e) => {
+              reject(Error("Couldn't open database."));
+            };
+
+            dbRequest.onupgradeneeded = onupgradeneeded;
+
+            dbRequest.onsuccess = (e) => {
+              let database = e.target.result;
+              let transaction = database.transaction(
+                [this._config.storeName],
+                "readwrite"
+              );
+              let objectStore = transaction.objectStore(this._config.storeName);
+              let objectRequest = objectStore.get(key);
+
+              objectRequest.onerror = (e) => {
+                reject(Error("Error while getting."));
+              };
+
+              objectRequest.onsuccess = (e) => {
+                resolve(objectRequest.result);
+              };
+            };
+          });
+        }
+
+        delete(key) {
+          return new Promise((resolve, reject) => {
+            let dbRequest = indexedDB.open(this._config.dbName);
+
+            dbRequest.onerror = (e) => {
+              reject(Error("Couldn't open database."));
+            };
+
+            dbRequest.onupgradeneeded = onupgradeneeded;
+
+            dbRequest.onsuccess = (e) => {
+              let database = e.target.result;
+              let transaction = database.transaction(
+                [this._config.storeName],
+                "readwrite"
+              );
+              let objectStore = transaction.objectStore(this._config.storeName);
+              let objectRequest = objectStore.delete(key);
+
+              objectRequest.onerror = (e) => {
+                reject(Error("Couldn't delete key."));
+              };
+
+              objectRequest.onsuccess = (e) => {
+                resolve("Deleted key successfully.");
+              };
+            };
+          });
+        }
+
+        save(key, value) {
+          return new Promise((resolve, reject) => {
+            let dbRequest = indexedDB.open(this._config.dbName);
+
+            dbRequest.onerror = (e) => {
+              reject(Error("Couldn't open database."));
+            };
+
+            dbRequest.onupgradeneeded = onupgradeneeded;
+
+            dbRequest.onsuccess = (e) => {
+              let database = e.target.result;
+              let transaction = database.transaction(
+                [this._config.storeName],
+                "readwrite"
+              );
+              let objectStore = transaction.objectStore(this._config.storeName);
+              let objectRequest = objectStore.put(value, key); // Overwrite if exists
+
+              objectRequest.onerror = (e) => {
+                reject(Error("Error while saving."));
+              };
+
+              objectRequest.onsuccess = (e) => {
+                resolve("Saved data successfully.");
+              };
+            };
+          });
+        }
+      }
+
+      window.idb = new DB("2048_db", "2048_store");
+    };
+
     const load = async () => {
+      if (!window.idb) loadIdb();
+
       const emptyBoard = () =>
         new Array(Constants.RowSize * Constants.ColumnSize).fill(0);
 
@@ -1116,10 +1034,10 @@
         board: emptyBoard(),
       };
 
-      const localGameStateString = window.localStorage.getItem("2048_State");
+      const localGameState = await window.idb.read("2048_State");
 
-      if (localGameStateString) {
-        GameState = JSON.parse(localGameStateString);
+      if (localGameState) {
+        GameState = localGameState;
       } else {
         const { board } = addNewPieces(emptyBoard(), 2);
 
@@ -1139,35 +1057,37 @@
         emptyBoard()
       );
 
-      const localThemeHistoryString =
-        window.localStorage.getItem("2048_History");
+      const localThemeHistory = await window.idb.read("2048_History");
 
-      if (localThemeHistoryString) {
-        ThemeHistory = JSON.parse(localThemeHistoryString);
+      if (localThemeHistory) {
+        ThemeHistory = localThemeHistory;
       }
 
-      for (const [key, theme] of Object.entries(Constants.DefaultThemes)) {
+      const response = await fetch(Constants.Api.DefaultThemes);
+      const defaultThemes = await response.json();
+      for (const [key, theme] of Object.entries(defaultThemes)) {
         ThemeHistory[key] = theme;
       }
 
-      const lastThemeHistoryString = window.localStorage.getItem("2048_Theme");
+      const lastThemeHistory = await window.idb.read("2048_Theme");
 
-      await switchTheme(lastThemeHistoryString ?? Constants.DefaultTheme);
+      await switchTheme(lastThemeHistory ?? Constants.DefaultTheme);
     };
 
-    const save = () => {
-      window.localStorage.setItem("2048_Theme", AppState.currentThemeKey);
-      window.localStorage.setItem("2048_State", JSON.stringify(GameState));
-      window.localStorage.setItem("2048_History", JSON.stringify(ThemeHistory));
+    const save = async () => {
+      if (!window.idb) loadIdb();
+
+      await window.idb.save("2048_Theme", AppState.currentThemeKey);
+      await window.idb.save("2048_State", GameState);
+      await window.idb.save("2048_History", ThemeHistory);
     };
 
-    const del = () => {
-      window.localStorage.removeItem("2048_Theme", AppState.currentThemeKey);
-      window.localStorage.removeItem("2048_State", JSON.stringify(GameState));
-      window.localStorage.removeItem(
-        "2048_History",
-        JSON.stringify(ThemeHistory)
-      );
+    const del = async () => {
+      if (!window.idb) loadIdb();
+
+      await window.idb.delete("2048_Theme");
+      await window.idb.delete("2048_State");
+      await window.idb.delete("2048_History");
     };
 
     const getThemedPiece = (state) => {
@@ -1194,6 +1114,12 @@
 
         if (themedPiece.format === "brat") {
           return `<div class="board-piece brat"><span>${themedPiece.value}</span></div>`;
+        }
+      }
+
+      if (themedPiece.type === "image") {
+        if (themedPiece.format === "dataurl") {
+          return `<div class="board-piece image"><img src="${themedPiece.value}" /><span></span></div>`;
         }
       }
     };
