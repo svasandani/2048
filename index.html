@@ -909,12 +909,9 @@
     };
 
     const loadIdb = () => {
-      const onupgradeneeded = (e) => {
-        let database = e.target.result;
-        let oldVersion = e.oldVersion;
-
-        if (e.oldVersion < 1) {
-          database.createObjectStore(this._config.storeName);
+      const onupgradeneeded = (database, oldVersion, storeName) => {
+        if (oldVersion < 1) {
+          database.createObjectStore(storeName);
         }
       };
 
@@ -938,7 +935,12 @@
               reject(Error("Couldn't open database."));
             };
 
-            dbRequest.onupgradeneeded = onupgradeneeded;
+            dbRequest.onupgradeneeded = (e) =>
+              onupgradeneeded(
+                e.target.result,
+                e.oldVersion,
+                this._config.storeName
+              );
 
             dbRequest.onsuccess = (e) => {
               let database = e.target.result;
@@ -968,7 +970,12 @@
               reject(Error("Couldn't open database."));
             };
 
-            dbRequest.onupgradeneeded = onupgradeneeded;
+            dbRequest.onupgradeneeded = (e) =>
+              onupgradeneeded(
+                e.target.result,
+                e.oldVersion,
+                this._config.storeName
+              );
 
             dbRequest.onsuccess = (e) => {
               let database = e.target.result;
@@ -998,7 +1005,12 @@
               reject(Error("Couldn't open database."));
             };
 
-            dbRequest.onupgradeneeded = onupgradeneeded;
+            dbRequest.onupgradeneeded = (e) =>
+              onupgradeneeded(
+                e.target.result,
+                e.oldVersion,
+                this._config.storeName
+              );
 
             dbRequest.onsuccess = (e) => {
               let database = e.target.result;
