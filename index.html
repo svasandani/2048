@@ -593,6 +593,7 @@
         left: (px) => `translateX(calc(-1 * ${px}px))`,
         right: (px) => `translateX(${px}px)`,
       },
+      MaxScaleIterations: 20,
     };
 
     const AppState = {
@@ -874,6 +875,14 @@
       AppState.currentThemeKey = themeKey;
       ThemeState = ThemeHistory[AppState.currentThemeKey];
 
+      const urlParams = new URLSearchParams(window.location.search);
+      urlParams.set("theme", themeKey);
+      window.history.replaceState(
+        {},
+        undefined,
+        window.location.pathname + "?" + urlParams.toString()
+      );
+
       updateDisplayState();
     };
 
@@ -1083,7 +1092,14 @@
 
       const lastThemeHistory = await window.idb.read("2048_Theme");
 
-      await switchTheme(lastThemeHistory ?? Constants.DefaultTheme);
+      let theme = lastThemeHistory ?? Constants.DefaultTheme;
+
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has("theme") && urlParams.get("theme") in ThemeHistory) {
+        theme = urlParams.get("theme");
+      }
+
+      await switchTheme(theme);
     };
 
     const save = async () => {
@@ -1131,7 +1147,7 @@
 
       if (themedPiece.type === "image") {
         if (themedPiece.format === "dataurl") {
-          return `<div class="board-piece image"><img src="${themedPiece.value}" /><span></span></div>`;
+          return `<div class="board-piece image"><img src="${themedPiece.value}" /></div>`;
         }
       }
     };
@@ -1144,19 +1160,35 @@
       node.querySelectorAll(".board-piece").forEach((piece) => {
         const span = piece.querySelector("span");
 
+        if (!span) return;
+
         const pieceWidth = piece.getBoundingClientRect().width;
         const pieceHeight = piece.getBoundingClientRect().height;
-        const spanWidth = span.getBoundingClientRect().width;
-        const spanHeight = span.getBoundingClientRect().height;
 
-        const widthOverflow = spanWidth / pieceWidth;
-        const heightOverflow = spanHeight / pieceHeight;
-        const largestOverflow = Math.max(widthOverflow, heightOverflow);
+        let iterations = 0;
+        let fontSize = parseFloat(getComputedStyle(span).fontSize);
+        while (
+          iterations < Constants.MaxScaleIterations &&
+          Math.max(
+            span.getBoundingClientRect().width / pieceWidth,
+            span.getBoundingClientRect().height / pieceHeight
+          ) >
+            1 - 2 * Constants.PiecePaddingPercent
+        ) {
+          if (iterations === Constants.MaxScaleIterations - 1) {
+            const scaleFactor =
+              (1 - 2 * Constants.PiecePaddingPercent) /
+              Math.max(
+                span.getBoundingClientRect().width / pieceWidth,
+                span.getBoundingClientRect().height / pieceHeight
+              );
+            span.style.scale = scaleFactor;
+          } else {
+            fontSize = fontSize * 0.85;
+            span.style.fontSize = `${fontSize.toFixed(2)}px`;
+          }
 
-        if (largestOverflow > 1 - 2 * Constants.PiecePaddingPercent) {
-          const scaleFactor =
-            (1 - 2 * Constants.PiecePaddingPercent) / largestOverflow;
-          span.style.scale = scaleFactor;
+          iterations++;
         }
       });
     };
@@ -1208,10 +1240,20 @@
       const growAnimationPromises = [];
 
       for (let i = 0; i < combined.length; i++) {
-        if (targetSquares.has(i) || combined[i] > 0) {
+        if (targetSquares.has(i)) {
           growAnimationPieces[i].classList.remove("invisible");
           const growAnimation = growAnimationPieces[i].animate(
             [{ transform: "scale(0.6)" }, { transform: "scale(1)" }],
+            { duration: 105, easing: "ease-out", fill: "forwards" }
+          );
+          growAnimationPromises.push(growAnimation.finished);
+        } else if (combined[i] > 0) {
+          const growAnimation = growAnimationPieces[i].animate(
+            [
+              { transform: "scale(0.6)" },
+              { transform: "scale(1.1)", offset: 0.8 },
+              { transform: "scale(1)" },
+            ],
             { duration: 105, easing: "ease-out", fill: "forwards" }
           );
           growAnimationPromises.push(growAnimation.finished);
