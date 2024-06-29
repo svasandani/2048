@@ -182,6 +182,7 @@
         flex-flow: row nowrap;
         align-items: center;
         justify-content: space-between;
+        gap: 0.375rem;
       }
       .button:disabled {
         cursor: not-allowed;
@@ -200,6 +201,19 @@
       .brat .button span {
         transform: scaleY(1.15);
         filter: blur(0.25px);
+      }
+
+      .input {
+        appearance: none;
+        border: none;
+        outline: none;
+
+        border-radius: 0.5rem;
+        font-size: 1rem;
+        padding: 0.375rem 0.5rem;
+      }
+      .input.small {
+        font-size: 0.75rem;
       }
 
       .checkbox {
@@ -311,28 +325,37 @@
         flex-grow: 1;
 
         display: grid;
-        grid-template-rows: 1fr;
+        grid-template-rows: 1fr auto 1fr;
         align-items: center;
-        justify-content: stretch;
         padding: 2rem;
+      }
+
+      #score-container,
+      #action-container {
+        display: flex;
+        flex-flow: row nowrap;
+        justify-content: center;
+        gap: min(8rem, 24vw);
+      }
+
+      .score-block {
+        display: flex;
+        flex-flow: column nowrap;
+        align-items: center;
       }
 
       #board-container {
         position: relative;
         overflow: hidden;
 
-        height: 100%;
-        width: 100%;
+        display: flex;
+        justify-content: center;
       }
       :where(.reset > div:not(#reset)) {
         opacity: 0.1;
         transition: 205ms ease-out;
       }
       .board {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
         width: min(100%, 30rem);
 
         display: grid;
@@ -349,10 +372,14 @@
         background-color: var(--lightest-gray);
         border-radius: 0.25rem;
       }
-      #anim {
-        pointer-events: none;
-      }
-      #state {
+      #anim,
+      #state,
+      #reset {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+
         pointer-events: none;
       }
       #reset {
@@ -408,7 +435,8 @@
         width: 100%;
       }
 
-      #overview-themes {
+      #overview-themes,
+      #theme-editor-form {
         display: flex;
         flex-flow: column nowrap;
         gap: 0.5rem;
@@ -440,6 +468,16 @@
         <div class="nav-buttons right"></div>
       </nav>
       <section id="game">
+        <div id="score-container">
+          <div class="score-block">
+            <span>High score</span>
+            <h2 id="high-score">0</h2>
+          </div>
+          <div class="score-block">
+            <span>Score</span>
+            <h2 id="score">0</h2>
+          </div>
+        </div>
         <div id="board-container">
           <div id="board" class="board">
             <div class="board-square"></div>
@@ -463,10 +501,47 @@
           <div id="state" class="board"></div>
           <div id="reset" class="board invisible">
             <span id="reset-text"></span>
+            <span
+              >Your final score was: <strong id="reset-score"></strong>!</span
+            >
             <button id="reset-button" class="theme button">
               Start new game
             </button>
           </div>
+        </div>
+        <div id="action-container">
+          <button id="action-undo" class="light-gray button">
+            <span>Undo</span>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+          <button id="action-reset" class="light-gray button">
+            <span>Reset</span>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 0 0-3.7-3.7 48.678 48.678 0 0 0-7.324 0 4.006 4.006 0 0 0-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 0 0 3.7 3.7 48.656 48.656 0 0 0 7.324 0 4.006 4.006 0 0 0 3.7-3.7c.017-.22.032-.441.046-.662M4.5 12l3 3m-3-3-3 3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
         </div>
       </section>
     </main>
@@ -510,8 +585,7 @@
             </svg>
             <strong>Themes</strong>
           </div>
-          <div id="overview-themes"></div>
-          <button id="overview-new-theme" class="small light-gray button">
+          <!--button id="overview-new-theme" class="small light-gray button">
             <span>New theme</span>
             <svg
               width="15"
@@ -526,7 +600,8 @@
                 stroke-linejoin="round"
               />
             </svg>
-          </button>
+          </button-->
+          <div id="overview-themes"></div>
           <button id="overview-clear-data" class="small light-gray button">
             <span>Clear data</span>
             <svg
@@ -562,10 +637,26 @@
             </svg>
             <strong>Theme editor</strong>
           </div>
-          <div id="theme-editor">
-            <span>Coming soon!</span>
-            <form id="theme-editor-form"></form>
-          </div>
+          <span>Coming soon!</span>
+          <!--form id="theme-editor-form">
+            <input type="text" class="small input" />
+          </form>
+          <button id="theme-editor-save" form="theme-editor-form" class="small light-gray button">
+            <span>Save theme</span>
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button-->
         </div>
       </div>
     </dialog>
@@ -596,16 +687,16 @@
       MaxScaleIterations: 20,
     };
 
-    const AppState = {
+    let AppState = {
       currentThemeKey: undefined,
+      highScore: 0,
     };
-
-    let GameDict = undefined;
     let ThemeHistory = {};
     let ThemeState = {};
     let GameState = {
       /** [t o p  r o w , ... , ... , b o t t o m  r o w] */
       board: new Array(Constants.RowSize * Constants.ColumnSize).fill(0),
+      score: 0,
     };
     let SwipeState = {
       active: false,
@@ -645,13 +736,15 @@
           "overview-theme-editor-form"
         ),
       },
+      Score: {
+        HighScore: document.getElementById("high-score"),
+        Score: document.getElementById("score"),
+      },
       Board: {
         Container: document.getElementById("board-container"),
         Board: document.getElementById("board"),
         Animation: document.getElementById("anim"),
         State: document.getElementById("state"),
-        Reset: document.getElementById("reset"),
-        ResetText: document.getElementById("reset-text"),
         BoardTouchStart: {
           Element: document.getElementById("board"),
           Listener: undefined,
@@ -664,6 +757,21 @@
           Element: document.getElementById("board"),
           Listener: undefined,
         },
+      },
+      Action: {
+        Undo: {
+          Element: document.getElementById("action-undo"),
+          Listener: undefined,
+        },
+        Reset: {
+          Element: document.getElementById("action-reset"),
+          Listener: undefined,
+        },
+      },
+      Reset: {
+        Board: document.getElementById("reset"),
+        Text: document.getElementById("reset-text"),
+        Score: document.getElementById("reset-score"),
       },
       Document: {
         Element: document,
@@ -841,8 +949,15 @@
       const { board: newBoard, targetSquares } = addNewPieces(state.board);
 
       GameState.board = newBoard;
-
       GameState.premove = calculateBoard(GameState.board);
+      GameState.score =
+        (GameState.score ?? 0) +
+        state.combined.reduce(
+          (score, points) => (points > 0 ? score + Math.pow(2, points) : score),
+          0
+        );
+      if (GameState.score > AppState.highScore)
+        AppState.highScore = GameState.score;
 
       if (GameState.board.some((square) => square >= Constants.MaxLevels)) {
         GameState.status = "won";
@@ -904,6 +1019,7 @@
 
       GameState = {
         board,
+        score: 0,
       };
 
       await animateState(
@@ -1053,10 +1169,10 @@
 
       GameState = {
         board: emptyBoard(),
+        score: 0,
       };
 
       const localGameState = await window.idb.read("2048_State");
-
       if (localGameState) {
         GameState = localGameState;
       } else {
@@ -1064,6 +1180,7 @@
 
         GameState = {
           board,
+          score: 0,
         };
       }
 
@@ -1079,7 +1196,6 @@
       );
 
       const localThemeHistory = await window.idb.read("2048_History");
-
       if (localThemeHistory) {
         ThemeHistory = localThemeHistory;
       }
@@ -1090,9 +1206,12 @@
         ThemeHistory[key] = theme;
       }
 
-      const lastThemeHistory = await window.idb.read("2048_Theme");
+      const localAppState = await window.idb.read("2048_App");
+      if (localAppState) {
+        AppState = localAppState;
+      }
 
-      let theme = lastThemeHistory ?? Constants.DefaultTheme;
+      let theme = AppState.currentThemeKey ?? Constants.DefaultTheme;
 
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.has("theme") && urlParams.get("theme") in ThemeHistory) {
@@ -1105,7 +1224,7 @@
     const save = async () => {
       if (!window.idb) loadIdb();
 
-      await window.idb.save("2048_Theme", AppState.currentThemeKey);
+      await window.idb.save("2048_App", AppState);
       await window.idb.save("2048_State", GameState);
       await window.idb.save("2048_History", ThemeHistory);
     };
@@ -1113,7 +1232,7 @@
     const del = async () => {
       if (!window.idb) loadIdb();
 
-      await window.idb.delete("2048_Theme");
+      await window.idb.delete("2048_App");
       await window.idb.delete("2048_State");
       await window.idb.delete("2048_History");
     };
@@ -1280,18 +1399,28 @@
       }
 
       if (GameState.status) {
-        Bindings.Board.ResetText.innerHTML =
+        Bindings.Reset.Text.innerHTML =
           GameState.status === "won"
             ? "You won! Well played."
             : "No more valid moves!";
+        Bindings.Reset.Score.innerHTML = GameState.score;
         Bindings.Board.Container.classList.add("reset");
-        Bindings.Board.Reset.classList.remove("invisible");
+        Bindings.Reset.Board.classList.remove("invisible");
       } else {
-        Bindings.Board.ResetText.innerHTML = "";
+        Bindings.Reset.Text.innerHTML = "";
+        Bindings.Reset.Score.innerHTML = "";
         Bindings.Board.Container.classList.remove("reset");
-        Bindings.Board.Reset.classList.add("invisible");
+        Bindings.Reset.Board.classList.add("invisible");
       }
 
+      Bindings.Score.HighScore.innerHTML = AppState.highScore ?? 0;
+      Bindings.Score.Score.innerHTML = GameState.score ?? 0;
+
+      Bindings.Board.Board.innerHTML = new Array(
+        Constants.RowSize * Constants.ColumnSize
+      )
+        .fill(`<div class="board-square"></div>`)
+        .join("");
       Bindings.Board.State.classList.remove("invisible");
       Bindings.Board.Animation.classList.add("invisible");
 
@@ -1320,20 +1449,27 @@
     };
 
     const clearBinding = (binding, event = "pointerdown") => {
-      binding.Element.removeEventListener(event, binding.Listener);
+      binding.Element?.removeEventListener(event, binding.Listener);
     };
 
     const updateBinding = (binding, callback, event = "pointerdown") => {
-      binding.Element.removeEventListener(event, binding.Listener);
+      binding.Element?.removeEventListener(event, binding.Listener);
       binding.Listener = callback;
-      binding.Element.addEventListener(event, binding.Listener);
+      binding.Element?.addEventListener(event, binding.Listener);
     };
 
     const updateButtonBindings = () => {
       updateBinding(
         Bindings.Document,
         (e) => {
-          if (!e.metaKey && e.key === "r") reset();
+          if (Bindings.Dialogs.OverviewDialog.open) return;
+
+          if (
+            !e.metaKey &&
+            e.key === "r" &&
+            confirm("Are you sure you want to reset your game?")
+          )
+            reset();
 
           if (!GameState.status) {
             Object.entries(Constants.KeyBindings).forEach(([move, keys]) =>
@@ -1384,8 +1520,7 @@
 
           if (
             AppState.currentThemeKey === key &&
-            AppState.currentThemeKey !== AppState.now &&
-            confirm(`Delete theme ${key.replace("+", " • ")}?`)
+            confirm(`Delete theme ${key}?`)
           ) {
             delete ThemeHistory[key];
             switchTheme(Constants.DefaultTheme);
@@ -1422,7 +1557,14 @@
       updateBinding(
         Bindings.Control.OverviewClearDataButton,
         async () => {
-          del();
+          if (
+            confirm(
+              "Are you sure you want to clear all data? This will remove themes, high scores, and reset your current game."
+            )
+          ) {
+            del();
+            window.location.reload();
+          }
         },
         "click"
       );
@@ -1430,6 +1572,20 @@
         Bindings.Control.ResetButton,
         () => {
           reset();
+        },
+        "click"
+      );
+      updateBinding(
+        Bindings.Action.Undo,
+        () => {
+          // @todo
+        },
+        "click"
+      );
+      updateBinding(
+        Bindings.Action.Reset,
+        () => {
+          if (confirm("Are you sure you want to reset your game?")) reset();
         },
         "click"
       );
