@@ -630,6 +630,10 @@
               />
             </svg>
           </button>
+          <label class="checkbox copy">
+            <input id="overview-undo-checkbox" type="checkbox" />
+            <span>Enable undos (takes effect next reset)</span>
+          </label>
         </div>
         <div class="pane">
           <div class="icon-group">
@@ -710,6 +714,7 @@
       board: new Array(Constants.RowSize * Constants.ColumnSize).fill(0),
       score: 0,
       history: [],
+      undosEnabled: false,
     };
     let SwipeState = {
       active: false,
@@ -782,6 +787,7 @@
         },
       },
       Reset: {
+        Undos: document.getElementById("overview-undo-checkbox"),
         Board: document.getElementById("reset"),
         Text: document.getElementById("reset-text"),
         Score: document.getElementById("reset-score"),
@@ -973,7 +979,7 @@
         (score, points) => (points > 0 ? score + Math.pow(2, points) : score),
         0
       );
-      if (GameState.score > AppState.highScore) {
+      if (!GameState.undosEnabled && GameState.score > AppState.highScore) {
         AppState.highScore = GameState.score;
         previousState.wasHighScore = true;
       }
@@ -1052,6 +1058,7 @@
         board,
         score: 0,
         history: [],
+        undosEnabled: Bindings.Reset.Undos.checked,
       };
 
       await animateState(
@@ -1203,6 +1210,7 @@
         board: emptyBoard(),
         score: 0,
         history: [],
+        undosEnabled: Bindings.Reset.Undos.checked,
       };
 
       const localGameState = await window.idb.read("2048_State");
@@ -1215,6 +1223,7 @@
           board,
           score: 0,
           history: [],
+          undosEnabled: Bindings.Reset.Undos.checked,
         };
       }
 
@@ -1372,10 +1381,7 @@
       for (let i = 0; i < diff.length; i++) {
         if (diff[i] > 0) {
           const moveAnimation = moveAnimationPieces[i].animate(
-            [
-              { transform: "translateX(0) translateY(0)" },
-              { transform: Constants.Transforms[move](diff[i] * movePx) },
-            ],
+            [{ transform: Constants.Transforms[move](diff[i] * movePx) }],
             { duration: 105, easing: "ease-in", fill: "forwards" }
           );
           moveAnimationPromises.push(moveAnimation.finished);
@@ -1437,7 +1443,9 @@
           GameState.status === "won"
             ? "You won! Well played."
             : "No more valid moves!";
-        Bindings.Reset.Score.innerHTML = GameState.score;
+        Bindings.Reset.Score.innerHTML = `${GameState.score ?? 0}${
+          GameState.undosEnabled ? "*" : ""
+        }`;
         Bindings.Board.Container.classList.add("reset");
         Bindings.Reset.Board.classList.remove("invisible");
       } else {
@@ -1448,9 +1456,11 @@
       }
 
       Bindings.Score.HighScore.innerHTML = AppState.highScore ?? 0;
-      Bindings.Score.Score.innerHTML = GameState.score ?? 0;
+      Bindings.Score.Score.innerHTML = `${GameState.score ?? 0}${
+        GameState.undosEnabled ? "*" : ""
+      }`;
 
-      if (GameState.history?.length > 0) {
+      if (GameState.undosEnabled && GameState.history?.length > 0) {
         Bindings.Action.Undo.Element.removeAttribute("disabled");
       } else {
         Bindings.Action.Undo.Element.setAttribute("disabled", true);
