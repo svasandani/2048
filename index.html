@@ -99,6 +99,10 @@
       nav h1 {
         color: var(--black-on-theme);
       }
+      .brat .copy {
+        transform: scaleY(1.25);
+        filter: blur(0.35px);
+      }
 
       .dialog {
         appearance: none;
@@ -508,12 +512,12 @@
           <div id="anim" class="board"></div>
           <div id="state" class="board"></div>
           <div id="reset" class="board invisible">
-            <span id="reset-text"></span>
-            <span
+            <span id="reset-text" class="copy"></span>
+            <span class="copy"
               >Your final score was: <strong id="reset-score"></strong>!</span
             >
             <button id="reset-button" class="theme button">
-              Start new game
+              <span>Start new game</span>
             </button>
           </div>
         </div>
@@ -645,7 +649,7 @@
             </svg>
             <strong>Theme editor</strong>
           </div>
-          <span>Coming soon!</span>
+          <span class="copy">Coming soon!</span>
           <!--form id="theme-editor-form">
             <input type="text" class="small input" />
           </form>
